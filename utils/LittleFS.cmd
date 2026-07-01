@@ -1,5 +1,5 @@
 set FILE=mklittlefs.bin
-set DIR=data
+set DIR=..\data
 set COM=COM3
 
 C:\Users\sav\AppData\Local\Arduino15\packages\esp32\tools\mklittlefs\4.0.2-db0513a\mklittlefs.exe ^

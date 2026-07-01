@@ -1,6 +1,9 @@
 #pragma once
 
+
+#define SDEBUG_LEVEL  3
 // Выдача сообщение сенсоров 1- иницилизация и ошибки, 2 - измерение параметров
+// Устаревшие макросы
 #define DEBUG_SENSORS 1
 #define DEBUG_SERIAL 
 #define IS_LORA
