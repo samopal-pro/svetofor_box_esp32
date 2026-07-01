@@ -14,7 +14,7 @@
 
 // ===== SDEBUG Configuration =====
 #define MODULE_NAME "CONFIG"
-#define MODULE_DEBUG_LEVEL DEBUG_INFO
+#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
 #include "src/Slib/SDEBUG.h"
 
 // ===== Path Constants =====

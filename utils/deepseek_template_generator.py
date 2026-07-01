@@ -72,12 +72,14 @@ class DeepSeekTemplateGenerator(QMainWindow):
         # Панель кнопок для файлов
         files_btn_layout = QHBoxLayout()
         
-        self.add_file_btn = QPushButton("➕ Добавить файл")
-        self.add_file_btn.clicked.connect(self.add_file)
+        self.add_file_btn = QPushButton("➕ Добавить файлы")
+        self.add_file_btn.clicked.connect(self.add_files)
+        self.add_file_btn.setToolTip("Выбрать один или несколько файлов")
         files_btn_layout.addWidget(self.add_file_btn)
         
-        self.add_folder_btn = QPushButton("📁 Вставить каталог")
-        self.add_folder_btn.clicked.connect(self.add_folder)
+        self.add_folder_btn = QPushButton("📁 Вставить каталоги")
+        self.add_folder_btn.clicked.connect(self.add_folders)
+        self.add_folder_btn.setToolTip("Выбрать один или несколько каталогов")
         files_btn_layout.addWidget(self.add_folder_btn)
         
         self.update_all_btn = QPushButton("🔄 Обновить все файлы")
@@ -300,38 +302,56 @@ class DeepSeekTemplateGenerator(QMainWindow):
         self.project_structure = final_structure
         self.set_status(f"✅ Структура сгенерирована! ({len(self.files)} файлов)", is_success=True)
     
-    def add_file(self):
-        """Добавление файла через диалог"""
-        file_path, _ = QFileDialog.getOpenFileName(
+    def add_files(self):
+        """Добавление нескольких файлов через диалог"""
+        file_paths, _ = QFileDialog.getOpenFileNames(
             self, 
-            "Выберите файл", 
+            "Выберите файлы", 
             "",
             "Все файлы (*);;Python (*.py);;JavaScript (*.js);;HTML (*.html);;CSS (*.css);;JSON (*.json);;Текстовые файлы (*.txt)"
         )
         
-        if file_path:
-            # Если базовая директория не установлена, предлагаем установить
-            if not self.base_dir:
-                reply = QMessageBox.question(
-                    self,
-                    "Корень проекта",
-                    f"Установить корень проекта в папку файла?\n{os.path.dirname(file_path)}",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                if reply == QMessageBox.Yes:
-                    self.base_dir = os.path.dirname(file_path)
-                    self.update_root_label()
-                else:
-                    # Предлагаем выбрать корень вручную
-                    self.set_root_directory()
-                    if not self.base_dir:
-                        return
-            
-            self.add_single_file(file_path)
+        if not file_paths:
+            return
+        
+        # Если базовая директория не установлена, предлагаем установить
+        if not self.base_dir:
+            # Используем первую общую родительскую папку
+            common_parent = os.path.commonpath(file_paths) if len(file_paths) > 1 else os.path.dirname(file_paths[0])
+            reply = QMessageBox.question(
+                self,
+                "Корень проекта",
+                f"Установить корень проекта в общую папку?\n{common_parent}",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                self.base_dir = common_parent
+                self.update_root_label()
+            else:
+                # Предлагаем выбрать корень вручную
+                self.set_root_directory()
+                if not self.base_dir:
+                    return
+        
+        # Добавляем все файлы
+        added_count = 0
+        for file_path in file_paths:
+            if self.add_single_file(file_path, show_status=False):
+                added_count += 1
+        
+        self.update_table()
+        self.generate_project_structure()
+        self.set_status(f"✅ Добавлено файлов: {added_count} (всего: {len(self.files)})", is_success=True)
     
-    def add_single_file(self, file_path):
+    def add_single_file(self, file_path, show_status=True):
         """Добавление одного файла"""
         try:
+            # Проверяем, существует ли файл
+            if not os.path.exists(file_path):
+                if show_status:
+                    self.set_status(f"❌ Файл не существует: {file_path}", is_error=True)
+                return False
+            
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
@@ -348,10 +368,9 @@ class DeepSeekTemplateGenerator(QMainWindow):
                         'path': file_path,
                         'relative_path': relative_path
                     }
-                    self.update_table()
-                    self.generate_project_structure()
-                    self.set_status(f"✅ Файл '{relative_path}' обновлён!", is_success=True)
-                    return
+                    if show_status:
+                        self.set_status(f"✅ Файл '{relative_path}' обновлён!", is_success=True)
+                    return True
             
             # Добавляем новый файл
             self.files.append({
@@ -360,15 +379,158 @@ class DeepSeekTemplateGenerator(QMainWindow):
                 'path': file_path,
                 'relative_path': relative_path
             })
-            self.update_table()
-            self.generate_project_structure()
-            self.set_status(f"✅ Файл '{relative_path}' добавлен! (Всего: {len(self.files)})", is_success=True)
+            return True
             
         except Exception as e:
-            self.set_status(f"❌ Ошибка при чтении файла: {str(e)}", is_error=True)
+            if show_status:
+                self.set_status(f"❌ Ошибка при чтении файла {os.path.basename(file_path)}: {str(e)}", is_error=True)
+            return False
     
-    def add_folder(self):
-        """Добавление всех файлов из каталога"""
+    def add_folders(self):
+        """Добавление нескольких каталогов"""
+        # Используем QFileDialog для выбора нескольких папок
+        # QFileDialog.getExistingDirectory не поддерживает множественный выбор
+        # Используем QFileDialog с опцией выбора каталогов
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+        
+        # Добавляем кнопку для множественного выбора
+        list_view = dialog.findChild(QListView, "listView")
+        if list_view:
+            list_view.setSelectionMode(QAbstractItemView.MultiSelection)
+        
+        tree_view = dialog.findChild(QTreeView)
+        if tree_view:
+            tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
+        
+        dialog.setWindowTitle("Выберите каталоги")
+        
+        if dialog.exec_() == QDialog.Accepted:
+            folder_paths = dialog.selectedFiles()
+            if folder_paths:
+                self.process_folders(folder_paths)
+    
+    def process_folders(self, folder_paths):
+        """Обработка выбранных каталогов"""
+        if not folder_paths:
+            return
+        
+        # Определяем общий родительский каталог как корень
+        if len(folder_paths) == 1:
+            # Один каталог - используем родительскую папку как корень
+            parent_dir = os.path.dirname(folder_paths[0])
+        else:
+            # Несколько каталогов - находим общий родительский каталог
+            try:
+                parent_dir = os.path.commonpath(folder_paths)
+            except ValueError:
+                # Если нет общего пути, используем первый каталог
+                parent_dir = os.path.dirname(folder_paths[0])
+        
+        # Проверяем, нужно ли изменить корень
+        if self.base_dir and self.base_dir != parent_dir:
+            reply = QMessageBox.question(
+                self,
+                "Корень проекта",
+                f"Текущий корень: {self.base_dir}\n"
+                f"Новый корень: {parent_dir}\n\n"
+                "Заменить корень проекта?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            if reply == QMessageBox.Yes:
+                self.base_dir = parent_dir
+                self.update_root_label()
+            # Если нет - оставляем старый
+        else:
+            self.base_dir = parent_dir
+            self.update_root_label()
+        
+        # Собираем все файлы из выбранных каталогов
+        skipped_extensions = {'.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.class', '.o', '.obj', '.pdb'}
+        skipped_dirs = {'.git', '__pycache__', 'node_modules', '.venv', 'venv', 'env', '.idea', '.vscode', '.pytest_cache'}
+        
+        file_count = 0
+        skipped_count = 0
+        
+        for folder_path in folder_paths:
+            for root, dirs, files in os.walk(folder_path):
+                # Пропускаем системные директории
+                dirs[:] = [d for d in dirs if d not in skipped_dirs]
+                
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    
+                    # Пропускаем бинарные файлы
+                    ext = os.path.splitext(file)[1].lower()
+                    if ext in skipped_extensions:
+                        skipped_count += 1
+                        continue
+                    
+                    # Пропускаем слишком большие файлы (> 1 МБ)
+                    try:
+                        if os.path.getsize(file_path) > 1024 * 1024:
+                            skipped_count += 1
+                            continue
+                    except:
+                        skipped_count += 1
+                        continue
+                    
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        
+                        # Получаем относительный путь от корня
+                        relative_path = os.path.relpath(file_path, self.base_dir)
+                        
+                        # Проверяем, есть ли уже такой файл
+                        exists = False
+                        for i, file_data in enumerate(self.files):
+                            if file_data['path'] == file_path:
+                                self.files[i] = {
+                                    'name': file,
+                                    'content': content,
+                                    'path': file_path,
+                                    'relative_path': relative_path
+                                }
+                                exists = True
+                                break
+                        
+                        if not exists:
+                            self.files.append({
+                                'name': file,
+                                'content': content,
+                                'path': file_path,
+                                'relative_path': relative_path
+                            })
+                        
+                        file_count += 1
+                        
+                    except UnicodeDecodeError:
+                        # Пропускаем бинарные файлы
+                        skipped_count += 1
+                        continue
+                    except Exception as e:
+                        skipped_count += 1
+                        continue
+        
+        self.update_table()
+        self.generate_project_structure()
+        
+        if file_count > 0:
+            self.set_status(
+                f"✅ Добавлено файлов из каталогов: {file_count} (пропущено: {skipped_count}, всего: {len(self.files)})", 
+                is_success=True
+            )
+        else:
+            self.set_status(
+                f"⚠️ Не удалось найти текстовые файлы в выбранных каталогах", 
+                is_error=True
+            )
+    
+    def add_folder_old(self):
+        """Старый метод для совместимости"""
         folder_path = QFileDialog.getExistingDirectory(
             self,
             "Выберите каталог для анализа",
@@ -376,99 +538,8 @@ class DeepSeekTemplateGenerator(QMainWindow):
             QFileDialog.ShowDirsOnly
         )
         
-        if not folder_path:
-            return
-        
-        # Сохраняем имя выбранной папки
-        folder_name = os.path.basename(folder_path)
-        
-        # Устанавливаем базовую директорию как родительскую папку
-        # чтобы относительные пути включали имя папки
-        parent_dir = os.path.dirname(folder_path)
-        self.base_dir = parent_dir
-        self.update_root_label()
-        
-        # Собираем все файлы из каталога
-        skipped_extensions = {'.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.class', '.o', '.obj', '.pdb'}
-        skipped_dirs = {'.git', '__pycache__', 'node_modules', '.venv', 'venv', 'env', '.idea', '.vscode', '.pytest_cache'}
-        
-        file_count = 0
-        skipped_count = 0
-        
-        for root, dirs, files in os.walk(folder_path):
-            # Пропускаем системные директории
-            dirs[:] = [d for d in dirs if d not in skipped_dirs]
-            
-            for file in files:
-                file_path = os.path.join(root, file)
-                
-                # Пропускаем бинарные файлы
-                ext = os.path.splitext(file)[1].lower()
-                if ext in skipped_extensions:
-                    skipped_count += 1
-                    continue
-                
-                # Пропускаем слишком большие файлы (> 1 МБ)
-                try:
-                    if os.path.getsize(file_path) > 1024 * 1024:
-                        skipped_count += 1
-                        continue
-                except:
-                    skipped_count += 1
-                    continue
-                
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                    
-                    # Получаем относительный путь от родительской директории
-                    # Теперь путь будет включать имя папки: my_app/src/main.py
-                    relative_path = os.path.relpath(file_path, parent_dir)
-                    
-                    # Проверяем, есть ли уже такой файл
-                    exists = False
-                    for i, file_data in enumerate(self.files):
-                        if file_data['path'] == file_path:
-                            self.files[i] = {
-                                'name': file,
-                                'content': content,
-                                'path': file_path,
-                                'relative_path': relative_path
-                            }
-                            exists = True
-                            break
-                    
-                    if not exists:
-                        self.files.append({
-                            'name': file,
-                            'content': content,
-                            'path': file_path,
-                            'relative_path': relative_path
-                        })
-                    
-                    file_count += 1
-                    
-                except UnicodeDecodeError:
-                    # Пропускаем бинарные файлы
-                    skipped_count += 1
-                    continue
-                except Exception as e:
-                    skipped_count += 1
-                    continue
-        
-        self.update_table()
-        self.generate_project_structure()
-        
-        if file_count > 0:
-            self.set_status(
-                f"✅ Добавлено файлов из каталога: {file_count} (пропущено: {skipped_count}, всего: {len(self.files)})", 
-                is_success=True
-            )
-        else:
-            self.set_status(
-                f"⚠️ Не удалось найти текстовые файлы в каталоге", 
-                is_error=True
-            )
+        if folder_path:
+            self.process_folders([folder_path])
     
     def update_all_files(self):
         """Обновление содержимого всех файлов"""

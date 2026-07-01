@@ -2,9 +2,11 @@
 
 /*
  * SDEBUG - Универсальная библиотека отладочных сообщений для ESP32 Arduino IDE
- * Версия: 1.0
+ * Версия: 2.0
  * 
  * ===== НОВЫЕ ВОЗМОЖНОСТИ =====
+ * - Полное исключение неиспользуемого кода при компиляции
+ * - Макрофункции для условной компиляции
  * - DEBUG_JSON_DOC макрос для вывода JSON документов
  * - Улучшенная производительность
  * - Поддержка ArduinoJson
@@ -68,7 +70,7 @@
  *    [DBG] SENSOR: Чтение датчика...
  * 
  * 9. ОСОБЕННОСТИ:
- *    - Неиспользуемые уровни исключаются при компиляции
+ *    - Неиспользуемые уровни ПОЛНОСТЬЮ исключаются при компиляции
  *    - Каждый модуль может иметь свой уровень отладки
  *    - По умолчанию модули используют глобальный уровень
  *    - Есть макросы с LN (перевод строки) и без (сборка строки)
@@ -130,6 +132,7 @@
 
 // ===== МАКРОСЫ ВЫВОДА ОШИБОК =====
 #if _EFFECTIVE_LEVEL >= DEBUG_ERROR
+  #define _LOG_ERROR_ENABLED 1
   #define LOG_ERROR(fmt, ...) \
     do { \
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_ERR); \
@@ -142,12 +145,14 @@
       Serial.printf(fmt "\r\n", ##__VA_ARGS__); \
     } while(0)
 #else
+  #define _LOG_ERROR_ENABLED 0
   #define LOG_ERROR(fmt, ...) ((void)0)
   #define LOG_ERRORLN(fmt, ...) ((void)0)
 #endif
 
 // ===== МАКРОСЫ ВЫВОДА СООБЩЕНИЙ =====
 #if _EFFECTIVE_LEVEL >= DEBUG_INFO
+  #define _LOG_INFO_ENABLED 1
   #define LOG_INFO(fmt, ...) \
     do { \
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_MSG); \
@@ -160,12 +165,14 @@
       Serial.printf(fmt "\r\n", ##__VA_ARGS__); \
     } while(0)
 #else
+  #define _LOG_INFO_ENABLED 0
   #define LOG_INFO(fmt, ...) ((void)0)
   #define LOG_INFOLN(fmt, ...) ((void)0)
 #endif
 
 // ===== МАКРОСЫ ОТЛАДОЧНОГО ВЫВОДА =====
 #if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
+  #define _LOG_DEBUG_ENABLED 1
   #define LOG_DEBUG(fmt, ...) \
     do { \
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
@@ -181,14 +188,15 @@
   #define LOG_HEXDUMP(data, len) \
     do { \
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
-      Serial.printf("Hex dump (%d bytes):\r\n", len); \
-      for (size_t i = 0; i < len; i++) { \
-        if (i % 16 == 0) Serial.print("  "); \
-        Serial.printf("%02X ", ((uint8_t*)data)[i]); \
-        if ((i + 1) % 16 == 0 || i == len - 1) Serial.println(); \
+      Serial.printf("Hex dump (%d bytes):\r\n", (int)(len)); \
+      for (size_t _i = 0; _i < (len); _i++) { \
+        if (_i % 16 == 0) Serial.print("  "); \
+        Serial.printf("%02X ", ((const uint8_t*)(data))[_i]); \
+        if ((_i + 1) % 16 == 0 || _i == (len) - 1) Serial.println(); \
       } \
     } while(0)
 #else
+  #define _LOG_DEBUG_ENABLED 0
   #define LOG_DEBUG(fmt, ...) ((void)0)
   #define LOG_DEBUGLN(fmt, ...) ((void)0)
   #define LOG_HEXDUMP(data, len) ((void)0)
@@ -202,30 +210,51 @@
   } while(0)
 
 // Макросы с прямым указанием модуля
-#define LOG_ERROR_M(module, fmt, ...) \
-  do { \
-    Serial.printf("[ERR] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
-  } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_ERROR
+  #define LOG_ERROR_M(module, fmt, ...) \
+    do { \
+      Serial.printf("[ERR] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
+    } while(0)
+#else
+  #define LOG_ERROR_M(module, fmt, ...) ((void)0)
+#endif
 
-#define LOG_INFO_M(module, fmt, ...) \
-  do { \
-    Serial.printf("[MSG] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
-  } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_INFO
+  #define LOG_INFO_M(module, fmt, ...) \
+    do { \
+      Serial.printf("[MSG] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
+    } while(0)
+#else
+  #define LOG_INFO_M(module, fmt, ...) ((void)0)
+#endif
 
-#define LOG_DEBUG_M(module, fmt, ...) \
-  do { \
-    Serial.printf("[DBG] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
-  } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
+  #define LOG_DEBUG_M(module, fmt, ...) \
+    do { \
+      Serial.printf("[DBG] %s: " fmt "\r\n", module, ##__VA_ARGS__); \
+    } while(0)
+#else
+  #define LOG_DEBUG_M(module, fmt, ...) ((void)0)
+#endif
 
 // ===== УСЛОВНАЯ КОМПИЛЯЦИЯ =====
-#define SDEBUG_IF_DEBUG(code) \
-  do { if (_EFFECTIVE_LEVEL >= DEBUG_DEBUG) { code } } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
+  #define SDEBUG_IF_DEBUG(code) do { code } while(0)
+#else
+  #define SDEBUG_IF_DEBUG(code) ((void)0)
+#endif
 
-#define SDEBUG_IF_INFO(code) \
-  do { if (_EFFECTIVE_LEVEL >= DEBUG_INFO) { code } } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_INFO
+  #define SDEBUG_IF_INFO(code) do { code } while(0)
+#else
+  #define SDEBUG_IF_INFO(code) ((void)0)
+#endif
 
-#define SDEBUG_IF_ERROR(code) \
-  do { if (_EFFECTIVE_LEVEL >= DEBUG_ERROR) { code } } while(0)
+#if _EFFECTIVE_LEVEL >= DEBUG_ERROR
+  #define SDEBUG_IF_ERROR(code) do { code } while(0)
+#else
+  #define SDEBUG_IF_ERROR(code) ((void)0)
+#endif
 
 // ===== МАКРОСЫ ДЛЯ JSON =====
 #if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
@@ -233,9 +262,9 @@
     do { \
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
       Serial.printf("JSON %s:\r\n", label); \
-      String jsonStr; \
-      serializeJsonPretty(doc, jsonStr); \
-      Serial.println(jsonStr); \
+      String _jsonStr; \
+      serializeJsonPretty(doc, _jsonStr); \
+      Serial.println(_jsonStr); \
     } while(0)
     
   #define DEBUG_JSON_DOC_COMPACT(label, doc) \
@@ -257,8 +286,23 @@
       SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
       Serial.printf("Free heap: %u, Max alloc: %u, Frag: %u%%\r\n", \
         ESP.getFreeHeap(), ESP.getMaxAllocHeap(), \
-        (ESP.getMaxAllocHeap() * 100) / ESP.getFreeHeap()); \
+        ESP.getFreeHeap() ? (ESP.getMaxAllocHeap() * 100) / ESP.getFreeHeap() : 0); \
     } while(0)
 #else
   #define DEBUG_MEMORY() ((void)0)
 #endif
+
+// ===== МАКРОФУНКЦИИ ДЛЯ УСЛОВНОГО ВЫПОЛНЕНИЯ =====
+#define SDEBUG_EXEC_ERROR(code) \
+  do { if (_EFFECTIVE_LEVEL >= DEBUG_ERROR) { code; } } while(0)
+
+#define SDEBUG_EXEC_INFO(code) \
+  do { if (_EFFECTIVE_LEVEL >= DEBUG_INFO) { code; } } while(0)
+
+#define SDEBUG_EXEC_DEBUG(code) \
+  do { if (_EFFECTIVE_LEVEL >= DEBUG_DEBUG) { code; } } while(0)
+
+// ===== ПРОВЕРКА УРОВНЕЙ (для использования в if) =====
+#define SDEBUG_IS_ERROR() (_EFFECTIVE_LEVEL >= DEBUG_ERROR)
+#define SDEBUG_IS_INFO()  (_EFFECTIVE_LEVEL >= DEBUG_INFO)
+#define SDEBUG_IS_DEBUG() (_EFFECTIVE_LEVEL >= DEBUG_DEBUG)
