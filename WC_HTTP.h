@@ -4,11 +4,7 @@
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <WebServer.h>
-//#if defined(IS_DNS)
 #include <DNSServer.h>
-
-//#include <ESPmDNS.h>
-//#endif
 #include <Update.h>
 #include <ArduinoJson.h>
 
@@ -16,46 +12,52 @@
 #include "WC_Task.h"
 #include "MyConfig.h"
 
-extern String strResponse;
+// ===== MODULE DEBUG CONFIGURATION =====
+#define MODULE_NAME "HTTP"
+#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
+#include "src/Slib/SDEBUG.h"
 
-void HTTPD_start();
+// ===== HTTP SERVER CORE =====
+void HTTPD_start();        // ← ВОЗВРАЩАЕМ эту функцию
+void HTTPD_begin();
 void HTTPD_loop();
 void HTTPD_stop();
-void HTTPD_begin();
 
-
-void handleSave();
-
-bool HTTP_redirect();
-void HTTP_notfound(String path);
-void HTTP_file(String uri);
-
+// ===== FILE SERVING =====
+void handleFile();
+void HTTP_file(const String& uri);
 String getContentType(const String& path);
 
-String readConfig();
-String readConfig1();
-void writeConfig(String s);
-void writeConfig1(String s);
+// ===== AUTHENTICATION =====
+bool isAuthenticated();
+void handleAuth();
 
-void handleFile();
+// ===== CONFIGURATION HANDLERS =====
+void handleSave();
+void handleConfigSelector();
+void handleCommand();
+
+// ===== FIRMWARE UPDATE =====
 void handleFirmwareUpload();
+
+// ===== RESPONSE HELPERS =====
+void handleResponse();
+void HTTP_setResponse(const String& msg = "", const String& cmd = "");
 void httpSetStatus(const String& s);
 
-void handleConfigSelector();
+// ===== UI COMPONENTS =====
 void handleHeader();
 void handleTail();
 void handleDistance();
-void handleAuth();
-void handleCommand();
-void handleResponse();
-void HTTP_setResponse(String _msg="", String _cmd="");
 
-bool needAuth(const String& type);
-bool isAuth();
-void printHeaders();
-void printArg();
+// ===== UTILITY =====
+bool HTTP_redirect();
+void HTTP_notfound(const String& path);
 String WiFi_ScanNetwork();
 String deviceName();
-void saveConfig();
-void HTTP_playMP3();
-void handle_firmwareUpdate();
+void printArg();
+void saveConfigData();
+void HTTP_playMP3();       // ← ДОБАВЛЯЕМ объявление
+
+// ===== EXTERNAL FUNCTIONS (from other modules) =====
+void API_fsBegin();        // ← ДОБАВЛЯЕМ объявление

@@ -4,6 +4,11 @@
  * SDEBUG - Универсальная библиотека отладочных сообщений для ESP32 Arduino IDE
  * Версия: 1.0
  * 
+ * ===== НОВЫЕ ВОЗМОЖНОСТИ =====
+ * - DEBUG_JSON_DOC макрос для вывода JSON документов
+ * - Улучшенная производительность
+ * - Поддержка ArduinoJson
+ *
  * ===== ИНСТРУКЦИЯ ПО ИСПОЛЬЗОВАНИЮ =====
  * 
  * 1. ПОДКЛЮЧЕНИЕ:
@@ -81,6 +86,7 @@
  */
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 // ===== УРОВНИ ОТЛАДКИ =====
 #define DEBUG_OFF    0  // Ничего не выводить
@@ -220,3 +226,39 @@
 
 #define SDEBUG_IF_ERROR(code) \
   do { if (_EFFECTIVE_LEVEL >= DEBUG_ERROR) { code } } while(0)
+
+// ===== МАКРОСЫ ДЛЯ JSON =====
+#if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
+  #define DEBUG_JSON_DOC(label, doc) \
+    do { \
+      SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
+      Serial.printf("JSON %s:\r\n", label); \
+      String jsonStr; \
+      serializeJsonPretty(doc, jsonStr); \
+      Serial.println(jsonStr); \
+    } while(0)
+    
+  #define DEBUG_JSON_DOC_COMPACT(label, doc) \
+    do { \
+      SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
+      Serial.printf("JSON %s: ", label); \
+      serializeJson(doc, Serial); \
+      Serial.println(); \
+    } while(0)
+#else
+  #define DEBUG_JSON_DOC(label, doc) ((void)0)
+  #define DEBUG_JSON_DOC_COMPACT(label, doc) ((void)0)
+#endif
+
+// ===== МАКРОСЫ ДЛЯ ПАМЯТИ =====
+#if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
+  #define DEBUG_MEMORY() \
+    do { \
+      SDEBUG_PRINT_PREFIX(SDEBUG_STR_DBG); \
+      Serial.printf("Free heap: %u, Max alloc: %u, Frag: %u%%\r\n", \
+        ESP.getFreeHeap(), ESP.getMaxAllocHeap(), \
+        (ESP.getMaxAllocHeap() * 100) / ESP.getFreeHeap()); \
+    } while(0)
+#else
+  #define DEBUG_MEMORY() ((void)0)
+#endif
