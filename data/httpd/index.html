@@ -1,0 +1,44 @@
+<html>
+<head>
+<meta charset="utf-8">
+<title>Датчик присутсвия</title>
+
+<link rel="stylesheet" href="/style.css">
+<script src="/js/app.js"></script>
+<script src="/js/form_class.js"></script>
+<script>
+window.addEventListener("DOMContentLoaded", async () => {
+  playMP3(70,"70","","play_once");
+  loadText('/header',"header");    
+  loadText('/tail',"tail");  
+  renderMenu('/json/menu.json');
+  watchDistance('/distance',2000);
+  renderForm('/json/index_form.json','/config','config');
+});
+</script>
+
+</head>
+
+<body>
+
+<div class="main">
+   <div id="header"></div>
+  <div id="menu"></div>
+  <fieldset>
+  <div id="dist" class="t2">Расстояние от датчика до препятствия сейчас (мм): 0000</div>  
+  <p class='t1'> Если расстояние NAN и датчик светится розовым, то сенсор не видит расстояние или поврежден.
+  Если датчик светится МАЛИНОВЫМ - НЕ ОБНОВЛЯЙТЕ СТРАНИЦУ и не производите повторную калибровку, это не поможет. 
+  Сначала расположите датчик так, чтобы он стабильно замерял, видел расстояние и не светился малиновым. 
+  Когда он увидет расстояние до пола, перестанет светиться малиновым.</p>
+
+  </fieldset>
+
+  <div id="formContainer"></div>
+  <div id="log"></div>
+  <div id="tail"></div>
+</div>
+
+
+
+</body>
+</html>

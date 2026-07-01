@@ -1,0 +1,117 @@
+{
+ "title": "Настройка сетевых параметров",
+ "form": [
+{
+  "fieldset": "Тип сенсора",
+  "fields": [
+    { "type": "select", "label": "Выберите тип сенсора:", "width": "400px", "name": "SENSOR_TYPE",
+      "options": [
+        {"value":"1","name":"Двойной ультразвуковой 4.8м серый (SR04T)"},
+        {"value":"2","name":"Одинарный ультразвуковой 5.8м серый (SR04M2)"},
+        {"value":"3","name":"Одинарный ультразвуковой 7.5м черный (Dyp-A01)"},
+        {"value":"10","name":"Лазерный сенсор 9м (TF-Luna)"},
+        {"value":"20","name":"Микроволновый сенсор 10м (LD-2413)"}
+      ]
+    }
+  ]
+},
+{
+  "fieldset": "Подключение к внешним сервисам по WiFi",
+  "fields": [
+    { "type": "select", "label": "Подключение к WiFi", "width": "280px", "name": "WIFI_MODE",
+      "options": [
+        {"value":"0","name":"Отключен"},
+        {"value":"1","name":"Включен"},
+        {"value":"2","name":"Авто"}
+      ]
+    },
+    { "type": "select", "label": "**Введите имя вашей WI-FI сети:", "name": "WIFI_NAME1", "request":"/cmd", "cmd":"wifi_list", "width": "280px" },
+    { "type": "password", "label": "**Введите пароль от вашей WI-FI сети:", "name": "WIFI_PASS1",  "width": "253px" },
+    { "type": "hidden", "name": "WIFI_NAME2" },
+    { "type": "hidden", "name": "WIFI_PASS2" },
+    { "type": "select", "label": "Подключение к WiFi", "width": "280px", "name": "WIFI_POWER",
+      "options": [
+        {"value":"84","name":"21dBm"},
+        {"value":"80","name":"20dBm"},
+        {"value":"76","name":"19dBm"},
+        {"value":"68","name":"17dBm"},
+        {"value":"60","name":"15dBm"},
+        {"value":"44","name":"11dBm"},
+        {"value":"28","name":"7dBm"},
+        {"value":"20","name":"5dBm"},
+        {"value":"8", "name":"2dBm"}
+      ]
+    },
+    { "type": "text", "label": "**Номер договора, логин личного кабинета:",  "name": "N_DOGIVOR", "width": 150  },
+    { "type": "text", "label": "**Номер бокса:",  "name": "N_BOX", "width": 150  },
+    { "type": "number", "label": "Принудительная связь с сервером каждые, сек:",  "name": "TM_HTTP_SEND", "width": 150  },
+    { "type": "number", "label": "Повторная попытка отправки через, сек:",  "name": "TM_HTTP_RETRY_ERROR", "width": 150  },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+
+  ]
+},
+{
+  "fieldset": "Подключение к онлайн мониторингу CRM.MOSCOW",
+    "fields": [
+    { "type": "checkbox", "name": "CRM_ENABLE"},
+    { "type": "label", "class":"t1", "value": "Для активации онлайн мониторинга поставьте галочку которая находится над этой строкой. Введите все поля с ** и сохраните. Нужно прописать: ID мойки, номер бокса, пароль сети интернет и выбрать сеть WI-FI. После этого сохраните и в первой вкладке выключите бесконечный режим раздачи WiFi активировав режим с бирюзовой иконкой.После сохраните и перезагрузите устройство нажав желтую кнопку внизу натроек."},
+    { "type": "label", "class":"t1", "value": "Ниже идут дополнительные настройки. Обратитесь в техническую поддержку прежде чем их менять."},
+    { "type": "text", "label": "Сервер:", "name": "CRM_HOST", "width": 250 },
+    { "type": "number", "label": "Порт:", "name": "CRM_PORT", "min": 1, "max": 100000, "width": 150 },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Подключение к онлайн мониторингу TB.SVETOFORBOX.RU",
+    "fields": [
+    { "type": "checkbox", "label":"Ввключить онлайн отправку данных:", "name": "TB_ENABLE"},
+    { "type": "checkbox", "label":"Отправка через шлюз:", "name": "TB_GATEWAY"},
+    { "type": "label", "class":"t1", "value": "Ниже идут дополнительные настройки. Обратитесь в техническую поддержку прежде чем их менять"},
+    { "type": "text", "label": "Сервер:", "name": "TB_HOST", "width": 250 },
+    { "type": "number", "label": "Порт:", "name": "TB_PORT", "min": 1, "max": 100000, "width": 150 },
+    { "type": "text", "label": "Токен доступа:", "name": "TB_TOKEN", "width": 250 },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Подключение шлюзу по HTTP",
+    "fields": [
+    { "type": "checkbox", "label":"Ввключить онлайн отправку данных:", "name": "HTTP_ENABLE"},
+    { "type": "textarea", "label": "Адреса шлюзов через запятую, пробел или с новой строки:", "name": "HTTP_SERVERS", "cols": 40 , "rows": 4 },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Подключение по LoRa 868МГц",
+    "fields": [
+    { "type": "checkbox", "name": "LORA_ENABLE"},
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Параметры DHCP",
+    "fields": [
+    { "type": "checkbox", "name": "STATIC_IP"},
+    { "type": "ip", "label": "Адрес:", "name": "IP_ADDR", "placeholder": "192.168..1.10", "width": 250 },
+    { "type": "ip", "label": "Маска:", "name": "IP_MASK", "placeholder": "255.255.255.0", "width": 250 },
+    { "type": "ip", "label": "Шлюз:", "name": "IP_GATE", "placeholder": "192.168..1.1", "width": 250 },
+    { "type": "ip", "label": "DNS:", "name": "IP_DNS", "placeholder": "8.8.8.8", "width": 250 },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Параметры доступа к контроллеру",
+    "fields": [
+    { "type": "password", "label": "Пароль для входа с правами опреатора:", "name": "ESP_PASS1",  "width": "153px" },
+    { "type": "password", "label": "Пароль для входа с правами администратора:", "name": "ESP_PASS2",  "width": "153px" },
+    { "type": "password", "label": "Пароль для входа с правами суперадминистратора:", "name": "ESP_PASS3",  "width": "153px" },
+    { "type": "text", "label": "Наименование устройства:", "name": "ESP_NAME",  "width": "350px", "cmd_is_null": "ap_name", "request":"/cmd" },
+    { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+   "include": "/json/common_buttons.json"
+}
+  ]
+}
+

@@ -1,0 +1,15 @@
+{
+ "title": "Настройка конфигурации реле",
+ "form": [
+{
+  "fieldset": "111",
+  "fields": [
+    { "label": "Яркость 0-10", "type": "number", "name": "BRIGHTNESS1", "min": 0, "max": 10, "width": 70  },
+    { "type": "text", "name": "FREE_COLOR1", "label": "Текст1" },
+    { "type": "text", "name": "FREE_COLOR2", "label": "Текст2", "label_class": "tb",  "class":"tb", "width": 250 },
+    { "type": "password", "name": "PASSWORD", "label": "Пароль",   "width": 228 }
+  ]
+}
+  ]
+}
+

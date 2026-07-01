@@ -1,0 +1,187 @@
+body {
+  background-color:#ffffff;
+  padding:20px;
+}
+
+/* MAIN PANEL */
+.main {
+  width:600px;
+  background:#cccccc;
+  color:#000088;
+  padding:10px;
+  border-radius:16px;
+  float:left;
+}
+
+.t1 {
+  font-size:10px;  
+}
+
+.tb {
+  font-weight:bold;
+}
+
+.t2 {
+  font-size:18px;  
+  font-weight:bold;
+}
+
+/* FIELDSET */
+.main fieldset {
+  border-color:#000088;
+  margin-bottom:12px;
+}
+
+.main legend {
+  font-size:20px;
+  font-weight:bold;
+}
+
+.main input {
+  background:#ffffff;
+  color:#000088;
+  border:0;
+  font-size:12pt;
+}
+
+.main select {
+  background:#ffffff;
+  color:#000088;
+  border:0;
+  font-size:12pt;
+/*  width:299px; */
+}
+
+/* LABEL */
+
+label {
+    display:inline-block;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    justify-content: space-between;
+}
+
+label.label_right   {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+
+/* INPUT WIDTH */
+.tint2 { width:120px; height:20px;}
+.tint1 { width:70px; height:20px;}
+
+/* MENU */
+.menu {
+  width: 600px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 колонки */
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.menu a {
+  display: block;
+  background: #88ff88;
+  color: #000088;
+  text-decoration: none;
+  padding: 5px;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.menu a:hover {
+  background: #88ff88;
+}
+
+.menu a.active {
+  background: #000088;
+  color: #ffffff;
+}
+
+/* TABLE */
+td {color:#000088;padding:2px 0;}
+
+th {color:#000088; padding:4px 0;text-align: left;}
+
+/* FILE INPUT */
+input[type=file]::file-selector-button {
+  border:2px solid #000088;
+  color:#000088;
+  background:#ffffff;
+}
+
+input[type=file]::file-selector-button:hover {
+  color:#000088;
+  background:#ffffff;
+}
+
+#log {
+  background: #cccccc;
+  color: #000088;
+  padding: 10px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.log-info {
+  color: #000088;
+}
+
+.log-error {
+  color: #ff4040;
+  font-weight: bold;
+}
+
+.log-ok {
+  color: #40ff70;
+}
+
+.config-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.config-table th {
+  color: #000088;
+  font-size: 12pt;
+  font-weight: bold;
+  border: none;
+  border-bottom: 1px solid #000088;
+  text-align: left;
+}
+
+input[type="button"],
+button {
+  padding:4px 10px;
+  background: #ffffff;
+  color: #000088;
+  font-size: 12pt;
+  border-radius: 5px;
+  border: 1px solid #888;
+/*  padding: 4px 12px;*/
+  cursor: pointer;
+}
+
+input[type=button].btn1 {background:#8888ff;}
+input[type=button].btn2 {background:#88ff88;}
+input[type=button].btn3 {background:#ffff88;}
+input[type=button].btn4 {background:#ff8888;}
+input[type=button].btn0 {background:#cccccc;}
+
+
+input[type=button].btn_play {
+    background: transparent;
+    border: none;
+    height: 14pt;
+    line-height: 14pt;
+    font-size: 14pt;
+    cursor: pointer;
+}
+hr {border-top:1px solid #000088;}
+

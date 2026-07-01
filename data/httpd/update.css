@@ -1,0 +1,45 @@
+.file-box{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:10px 0;
+}
+
+/* Кнопка выбора файла */
+.file-btn{
+  width:120px;  
+  display:inline-block;
+  padding:2px 12px;
+  border:1px solid #888;
+  border-radius:8px;
+  background:#ffffff;
+  color:#000088;
+  font-size:12pt;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.file-btn:hover{
+  background:#eeeeff;
+}
+
+/* Скрываем реальный input */
+.file-btn input{
+  display:none;
+}
+
+/* Поле с именем файла */
+.file-name{
+  flex:1;
+  padding:2px 10px;
+  border:1px solid #888;
+  border-radius:5px;
+  background:#ffffff;
+  color:#000088;
+  font-size:12pt;
+  min-height:20px;
+  display:flex;
+  align-items:center;
+}
+
+button.btn2 {background:#88ff88;}

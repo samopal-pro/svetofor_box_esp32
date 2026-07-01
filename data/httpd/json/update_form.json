@@ -1,0 +1,14 @@
+{
+  "title": "Обновление прошивки",
+  "form": [
+      {
+      "fieldset": "Обновление прошивки",
+      "fields": [
+        { "type": "file", "name": "fwFile", "label": "Выбрать файл", "width": "300px"},
+        { "type": "button","name": "update",  "label": "Прошивка", "mode": "update","file": "fwFile" },     
+        { "type": "button", "name": "", "label": "Отмена" ,"mode": "back" }
+      ]
+    }
+  ]
+}
+

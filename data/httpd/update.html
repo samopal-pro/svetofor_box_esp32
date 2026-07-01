@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Загрузка прошивки</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/update.css">
+<script src="/js/update.js"></script>
+<script src="/js/app.js"></script>
+<script>
+window.addEventListener("DOMContentLoaded", async () => {
+  playMP3(90,"89","");
+
+  loadText('/header',"header");    
+  loadText('/tail',"tail");  
+  fileStyle();
+});
+</script>
+</head>
+<body>
+
+<div class="main">
+  <div id="header"></div>
+
+  <h1>Загрузка прошивки</h1>
+
+<div class="file-box">
+
+  <label class="file-btn">
+    📁 Выбрать .bin
+    <input type="file" id="fw" accept=".bin">
+  </label>
+
+  <div class="file-name" id="fileName">Файл не выбран</div>
+
+</div>
+  <br><br>
+
+<div class="menu">
+  <button onclick="upload()" class="btn2">Загрузка и прошивка</button>
+  <button onclick="window.history.back()">Отмена</button>
+  <button onclick="window.location.href='/'">Главная</button>
+</div>
+
+
+
+  <div id="log"></div>
+  <div id="tail"></div>
+
+  </div>
+
+
+</body>
+</html>

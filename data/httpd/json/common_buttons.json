@@ -1,0 +1,41 @@
+{
+  "fieldset": "",
+  "fields": [
+    {
+      "type": "button",
+      "name": "/update.html",
+      "label": "Оновление прошивки",
+      "mode": "url",
+      "class": "btn1"
+    },
+    {
+      "type": "button",
+      "name": "Default",
+      "label": "Сброс до заводских настроек",
+      "class": "btn2",
+      "mode": "request",
+      "url": "/cmd",
+      "cmd": "default",
+      "reload": 5000,
+      "log": "Настроки сброшены до заводских. Контроллер перезагружается"
+    },
+    {
+      "type": "button",
+      "name": "Reboot",
+      "label": "Перезагрузка",
+      "class": "btn3",
+      "mode": "request",
+      "url": "/cmd",
+      "cmd": "reboot",
+      "reload": 10000,
+      "log": "Перезагрузка контроллера. Контроллер перезагружается"
+    },
+    {
+      "type": "button",
+      "name": "Logout",
+      "label": "Выход",
+      "mode": "logout",
+      "class": "btn4"
+    }
+  ]
+}

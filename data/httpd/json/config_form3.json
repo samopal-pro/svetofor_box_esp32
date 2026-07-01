@@ -1,0 +1,197 @@
+{
+ "title": "Настройка звуковых оповещений",
+ "form": [
+{
+  "fieldset": "Настройка дополнительной подсветки. Подсветка оповещений",
+    "fields": [
+    { "type": "checkbox", "name": "MP3_SHORT_MSG", "label": "Включить короткие звуковые оповещения"},
+    { "type": "number", "label": "Яркость 0-10", "name": "BRIGHTNESS", "min": 0, "max": 10, "class": "tint2","double": "config" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value": "", "td_width": "50px" },
+          { "type": "label", "value": "Цвет в режиме \"Свободно\"", "td_width": "250px" },
+          { "type": "color_box", "name": "FREE_COLOR1", "target":"FREE_COLOR", "td_width": "50px"},
+          { "type": "color_box", "name": "FREE_COLOR2", "target":"FREE_COLOR", "td_width": "50px"},
+          { "type": "label", "value": "Настройка", "td_width": "100px" },
+          { "type": "color", "name": "FREE_COLOR" }
+        ],
+        [
+          { "type": "checkbox", "name": "CHECK_FREE_BLINK_COLOR" },
+          { "type": "label", "value": "Мигание в режиме \"Свободно\"" },
+          { "type": "color_box", "name": "FREE_BLINK_COLOR1", "target":"FREE_BLINK_COLOR"},
+          { "type": "color_box", "name": "FREE_BLINK_COLOR2", "target":"FREE_BLINK_COLOR"},
+          { "type": "label", "value": "Настройка" },
+          { "type": "color", "name": "FREE_BLINK_COLOR" }        
+        ],
+        [
+          { "type": "label", "value": "" },
+          { "type": "label", "value": "Цвет в режиме \"Занято\"" },
+          { "type": "color_box", "name": "BUSY_COLOR1", "target":"BUSY_COLOR"},
+          { "type": "color_box", "name": "BUSY_COLOR2", "target":"BUSY_COLOR"},
+          { "type": "label", "value": "Настройка" },
+          { "type": "color", "name": "BUSY_COLOR" }
+        ]
+      ]
+
+    },
+     
+    { "type": "button", "name": "config3", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Настройка оповещения",
+    "fields": [
+    { "type": "number", "label": "Громкость звука 0-30", "name": "MP3_VOLUME", "min": 0, "max": 30, "class": "tint2","double": "config" },
+    { "type": "hidden", "name": "MP3_BUSY_NUM" },
+    { "type": "hidden", "name": "MP3_NAN_NUM" },
+    { "type": "hidden", "name": "MP3_BUSY1_NUM" },
+    { "type": "hidden", "name": "MP3_BUSY2_NUM" },
+    { "type": "hidden", "name": "MP3_FREE_NAN_NUM" },
+    { "type": "hidden", "name": "MP3_FREE_NUM" },
+    
+    {
+      "type": "table",
+        "header": [
+          {"label":"Оповещение"},
+          {"label":"Вкл."},
+          {"label":"Задержка"},
+          {"label":"Повт."},
+          {"label":"Тест"},
+          {"label":"Цвет"},
+          {"label":"Длит"}
+      ],
+
+      "rows": [
+        [
+          { "type": "label", "value": "Момент заезда автомобиля. Файл 001.mp3" },
+          { "type": "checkbox", "name": "MP3_BUSY_ENABLE", "td_width": 50 },
+          { "type": "number", "name": "MP3_BUSY_DELAY", "min": 0, "max": 3600, "width": 60, "td_width": 80 },
+          { "type": "checkbox", "name": "MP3_BUSY_LOOP", "td_width": 40 },
+          { "type": "button", "name": "01", "label": "▶" ,"class":"btn_play", "mode": "request", "url":"/cmd", "cmd": "play", "td_width": 40 },
+          { "type": "color", "name": "BUSY_BUSY_COLOR", "td_width": 70 },
+          { "type": "number", "name": "MP3_BUSY_COLOR_TM", "min": 0, "max": 3600, "width": 50, "td_width": 70 }
+        ],
+        [
+          { "type": "label", "value": "Датчик перестает видеть расстояние (Машина в пене). Файл 002.mp3" },
+          { "type": "checkbox", "name": "MP3_NAN_ENABLE" },
+          { "type": "number", "name": "MP3_NAN_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_NAN_LOOP" },
+          { "type": "button", "name": "02", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_NAN_COLOR" },
+          { "type": "number", "name": "MP3_NAN_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "В боксе долго находится автмомбиль. Файл 003.mp3" },
+          { "type": "checkbox", "name": "MP3_BUSY1_ENABLE" },
+          { "type": "number", "name": "MP3_BUSY1_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BUSY1_LOOP" },
+          { "type": "button", "name": "03", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BUSY1_COLOR" },
+          { "type": "number", "name": "MP3_BUSY1_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "Автомобиль слишком долго в доксе или датчик \"залип\". Файл 004.mp3" },
+          { "type": "checkbox", "name": "MP3_BUSY2_ENABLE" },
+          { "type": "number", "name": "MP3_BUSY2_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BUSY2_LOOP" },
+          { "type": "button", "name": "04", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BUSY2_COLOR" },
+          { "type": "number", "name": "MP3_BUSY2_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "После выезда автомобиля датчик не видит расстояния. (Под датчиком на полу много пены либо ошибка калибровки). Файл 005.mp3" },
+          { "type": "checkbox", "name": "MP3_FREE_NAN_ENABLE" },
+          { "type": "number", "name": "MP3_FREE_NAN_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_FREE_NAN_LOOP" },
+          { "type": "button", "name": "05", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_FREE_NAN_COLOR" },
+          { "type": "number", "name": "MP3_FREE_NAN_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "Выезд автомобиля. Бокс свободен. (Можно загрузить рекламу) Файл 006.mp3" },
+          { "type": "checkbox", "name": "MP3_FREE_ENABLE" },
+          { "type": "number", "name": "MP3_FREE_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_FREE_LOOP" },
+          { "type": "button", "name": "06", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_FREE_COLOR" },
+          { "type": "number", "name": "MP3_FREE_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ]
+      ]
+
+    },
+    { "type": "button", "name": "config3", "label": "Сохранить", "mode": "save"}
+
+    ]
+},
+{
+  "fieldset": "Настройка дополнительного входа",
+    "fields": [
+    { "type": "number", "label": "Громкость звука 0-30", "name": "BRIGHTNESS", "min": 0, "max": 30, "class": "tint2","double": "config" },
+    { "type": "hidden", "name": "MP3_BTN_ADD1_NUM" },
+    { "type": "hidden", "name": "MP3_BTN_ADD2_NUM" },
+    { "type": "hidden", "name": "MP3_BTN_ADD_FREE1_NUM" },
+    { "type": "hidden", "name": "MP3_BTN_ADD_FREE2_NUM" },
+    {
+      "type": "table",
+        "header": [
+          {"label":"Оповещение"},
+          {"label":"Вкл."},
+          {"label":"Задержка"},
+          {"label":"Повт."},
+          {"label":"Тест"},
+          {"label":"Цвет"},
+          {"label":"Длит"}
+      ],
+      "rows": [
+        [
+          { "type": "label", "value": "Первое срабатывание на замыкание входа в режиме занято. Файл 007.mp3" },
+          { "type": "checkbox", "name": "MP3_BTN_ADD1_ENABLE" },
+          { "type": "number", "name": "MP3_BTN_ADD1_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BTN_ADD1_LOOP" },
+          { "type": "button", "name": "07", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BTN_ADD1_COLOR" },
+          { "type": "number", "name": "MP3_BTN_ADD1_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "Второе срабатывание на замыкание входа в режиме занято. Файл 008.mp3" },
+          { "type": "checkbox", "name": "MP3_BTN_ADD2_ENABLE" },
+          { "type": "number", "name": "MP3_BTN_ADD2_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BTN_ADD2_LOOP" },
+          { "type": "button", "name": "08", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BTN_ADD2_COLOR" },
+          { "type": "number", "name": "MP3_BTN_ADD2_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "Первое срабатывание на замыкание входа в режиме свободно. Файл 009.mp3" },
+          { "type": "checkbox", "name": "MP3_BTN_ADD_FREE1_ENABLE" },
+          { "type": "number", "name": "MP3_BTN_ADD_FREE1_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BTN_ADD_FREE1_LOOP" },
+          { "type": "button", "name": "09", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BTN_ADD_FREE1_COLOR" },
+          { "type": "number", "name": "MP3_BTN_ADD_FREE1_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ],
+        [
+          { "type": "label", "value": "Второе срабатывание на замыкание входа в режиме свободно. Файл 010.mp3" },
+          { "type": "checkbox", "name": "MP3_BTN_ADD_FREE2_ENABLE" },
+          { "type": "number", "name": "MP3_BTN_ADD_FREE2_DELAY", "min": 0, "max": 3600, "width": 60 },
+          { "type": "checkbox", "name": "MP3_BTN_ADD_FREE2_LOOP" },
+          { "type": "button", "name": "10", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" },
+          { "type": "color", "name": "BUSY_BTN_ADD_FREE2_COLOR" },
+          { "type": "number", "name": "MP3_BTN_ADD_FREE2_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
+        ]
+      ]
+
+    },
+    { "type": "checkbox", "name": "BTN_ADD_OFF", "label": "Отключать звуковую дорожку после отключения входа"},
+    { "type": "checkbox", "name": "BTN_ADD_IVERSE", "label": "Включить инверсию дополнительного входа"},
+    { "type": "button", "name": "config3", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+   "include": "/json/common_buttons.json"
+}
+  ]
+}
+

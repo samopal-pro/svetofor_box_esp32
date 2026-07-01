@@ -1,0 +1,35 @@
+{
+  "menu": [
+    {
+      "name": "Основные настройки",
+      "url": "/",
+      "play_name": 70,
+      "play_arg1": "70"
+    },
+    {
+      "name": "Настройки реле",
+      "url": "/config1.html",
+      "play_name": 71,
+      "play_arg1": "70"
+    },
+    {
+      "name": "Сеть и сенсор",
+      "url": "/config2.html",
+      "play_name": 72,
+      "play_arg1": "70"
+    },
+    {
+      "name": "Звуковые оповещения",
+      "url": "/config3.html",
+      "play_name": 73,
+      "play_arg1": "70"
+    },
+    {
+      "name": "Стартовые настройки",
+      "url": "/config4.html",
+      "play_name": 74,
+      "play_arg1": "70"
+    }
+  ]
+}
+

@@ -1,0 +1,27 @@
+{
+  "active": "config1",
+  "config1": {
+    "name": "config1", 
+    "label": "Тест", 
+    "mp3_num": 76,
+    "text": "Тестовая конфигурация",
+    "file": "/config/config1.json", 
+    "default": "/config/config_default1.json" 
+  },
+  "config2": {
+    "name": "config2", 
+    "label": "Автомойка", 
+    "mp3_num": 77,
+    "text": "Конфигурация для автомойки",
+    "file": "/config/config2.json", 
+    "default": "/config/config_default2.json" 
+  },
+  "config3": {
+    "name": "config3", 
+    "mp3_num": 78,
+    "label": "Парковка", 
+    "text": "Конфигурация для парковки",
+    "file": "/config/config3.json", 
+    "default": "/config/config_default3.json" 
+  }
+}

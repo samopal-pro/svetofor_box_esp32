@@ -1,0 +1,219 @@
+{
+ "title": "Стартовые настройки",
+ "form": [
+{
+  "fieldset": "Первый запуск",
+    "fields": [
+    { "type": "checkbox", "label": "Включить звуковые оповещения для первого запуска", "name": "MP3_99_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Первый запуск, приветствие. Дорожка 099.mp3", "td_width": "550px"},
+          { "type": "button", "name": "99", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "checkbox", "label": "Включить звуковые оповещения для каждого запуска", "name": "MP3_100_ENABLE", "label_class": "label_right"  },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Запуск датчика, приветствие. Дорожка 100.mp3", "td_width": "550px"},
+          { "type": "button", "name": "100", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Калибровка (Полнесение магнита на 3-5 сек)",
+    "fields": [
+    { "type": "checkbox", "label": "Включить звуковые оповещения для калибровки", "name": "MP3_97_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Начало калибровки. Дорожка 097.mp3", "td_width": "550px"},
+          { "type": "button", "name": "97", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Рано убрал магнит. Дорожка 096.mp3", "td_width": "550px"},
+          { "type": "button", "name": "96", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Датчик не видит расстояние. Дорожка 095.mp3", "td_width": "550px"},
+          { "type": "button", "name": "95", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Датчик плохо видит расстояние. Дорожка 094.mp3", "td_width": "550px"},
+          { "type": "button", "name": "94", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Датчик успешно откалибровался. Дорожка 093.mp3", "td_width": "550px"},
+          { "type": "button", "name": "93", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Сброс паролей (Удержание магнита свыше 10 сек)",
+    "fields": [
+    { "type": "checkbox", "label": "Включить звуковые оповещения для сброса паролей", "name": "MP3_98_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Сброс паролей. Дорожка 098.mp3", "td_width": "550px"},
+          { "type": "button", "name": "98", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Сброс имени WiFi (Поднесение магнита 5 раз подряд)",
+    "fields": [
+    { "type": "checkbox", "label": "Включить звуковые оповещения для сброса имени WiFi", "name": "MP3_92_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Сброс имени WiFi. Дорожка 092.mp3", "td_width": "550px"},
+          { "type": "button", "name": "92", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Оповещения в WEB интерфейсе",
+    "fields": [
+    { "type": "checkbox", "label": "Включить звуковые оповещения для WEB интерфей", "name": "MP3_89_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Сброс до заводских настроек. Дорожка 091.mp3", "td_width": "550px"},
+          { "type": "button", "name": "91", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Обновление прошивки. Дорожка 090.mp3", "td_width": "550px"},
+          { "type": "button", "name": "90", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Нажатие на кнопку \"Обновление прошивки\". Дорожка 089.mp3", "td_width": "550px"},
+          { "type": "button", "name": "89", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Успешное обновление прошивки. Дорожка 088.mp3", "td_width": "550px"},
+          { "type": "button", "name": "88", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Ошибка обновления прошивки. Дорожка 087.mp3", "td_width": "550px"},
+          { "type": "button", "name": "87", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Нажатие на кнопку \"Перезагрузки\". Дорожка 086.mp3", "td_width": "550px"},
+          { "type": "button", "name": "86", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Нажатие на кнопку \"Автокалибровки\". Дорожка 085.mp3", "td_width": "550px"},
+          { "type": "button", "name": "85", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Нажатие на кнопку \"Обновить расстояние\". Дорожка 084.mp3", "td_width": "550px"},
+          { "type": "button", "name": "84", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Нажатие на кнопку \"Сохранить\". Дорожка 083.mp3", "td_width": "550px"},
+          { "type": "button", "name": "83", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Подсказка пароля при первом неавторизованном заходе. Дорожка 082.mp3", "td_width": "550px"},
+          { "type": "button", "name": "82", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Переключение конфигурации в тестовый режим. Дорожка 076.mp3", "td_width": "550px"},
+          { "type": "button", "name": "76", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Переключение конфигурации в режим автомойки. Дорожка 077.mp3", "td_width": "550px"},
+          { "type": "button", "name": "77", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Переключение конфигурации в режим парковки. Дорожка 078.mp3", "td_width": "550px"},
+          { "type": "button", "name": "78", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+  "fieldset": "Оповещение переключения страниц",
+    "fields": [
+    { "type": "checkbox", "label": "Включить оповещение кнопок переключения страниц", "name": "MP3_70_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Кнопка \"Основные настройки\". Дорожка 070.mp3", "td_width": "550px"},
+          { "type": "button", "name": "70", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Кнопка \"Настройки реле\". Дорожка 071.mp3", "td_width": "550px"},
+          { "type": "button", "name": "71", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Кнопка \"Сеть и сенсор\". Дорожка 072.mp3", "td_width": "550px"},
+          { "type": "button", "name": "72", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Кнопка \"Звуковые оповещения\". Дорожка 070.mp3", "td_width": "550px"},
+          { "type": "button", "name": "73", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Кнопка \"Стартовые настройки\". Дорожка 074.mp3", "td_width": "550px"},
+          { "type": "button", "name": "74", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},{
+  "fieldset": "Оповещение подключения к WiFi",
+    "fields": [
+    { "type": "checkbox", "label": "Включить оповещение подключения к WiFi", "name": "MP3_60_ENABLE", "label_class": "label_right" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value":"Подключено к WiFi. Дорожка 060.mp3", "td_width": "550px"},
+          { "type": "button", "name": "60", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Идет подключение к WiFi. Дорожка 061.mp3", "td_width": "550px"},
+          { "type": "button", "name": "61", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ],
+        [
+          { "type": "label", "value":"Ошибка подключения к WiFi. Дорожка 062.mp3", "td_width": "550px"},
+          { "type": "button", "name": "72", "label": "▶","class":"btn_play" ,"mode": "request", "url":"/cmd", "cmd": "play" }
+        ]
+     ]
+    },    
+    { "type": "button", "name": "config4", "label": "Сохранить", "mode": "save"}
+    ]
+},
+{
+   "include": "/json/common_buttons.json"
+}
+
+  ]
+}
+

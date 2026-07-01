@@ -1,0 +1,101 @@
+{
+ "title": "Настройка конфигурации реле",
+ "form": [
+{
+  "fieldset": "Режим работы реле №1 Провода витой пары",
+  "fields": [
+    { "label": "Задержка переключения на \"занято\" (сек):", "type": "number", "name": "TM_ON_RELAY1", "min": 0, "max": 30, "class": "tint2" },
+    { "label": "Задержка переключения на \"свободно\" (сек):", "type": "number", "name": "TM_OFF_RELAY1", "min": 0, "max": 30, "class": "tint2" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/relay0.png", "td_width": "50px" },
+          { "type": "radio", "name": "MODE_RELAY1", "value":"0", "td_width": "50px"},
+          { "type": "label", "value": "Выключить реле" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay1.png"},
+          { "type": "radio", "name": "MODE_RELAY1", "value":"1"},
+          { "type": "label", "value": "Переключение по умолчанию, постоянно ВКЛ или ВЫКЛ в режимах Занято-свободно" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay2.png"},
+          { "type": "radio", "name": "MODE_RELAY1", "value":"2"},
+          { "type": "label", "value": "Управление кнопкой открытия или закрытия ворот. Один раз" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay4.png"},
+          { "type": "radio", "name": "MODE_RELAY1", "value":"4"},
+          { "type": "label", "value": "Импульсный режим" }
+        ]
+     ]
+    },
+    { "label": "Инверсия реле замкнуто/разомкнуто", "type": "checkbox", "name": "INVERSE_RELAY1", "label_class": "tb" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/relay5.png", "td_width": "50px" },
+          { "type": "radio", "name": "MODE_RELAY1", "value":"5", "td_width": "50px"},
+          { "type": "label", "value": "Управление кнопкой открытия или закрытия ворот в момент заезда и в момент выезда" }
+        ]
+       ]
+    },
+    { "label": "На сколько секунд замкнуть контакты. Для управления кнопкой закрытия или открытия ворот:", "type": "number", "name": "TM_PULSE_RELAY1", "min": 1, "max": 30, "class": "tint1" },
+    { "label": "На сколько секунд разамкнуть контакты. Только для импульсного режима:", "type": "number", "name": "TM_PAUSE_RELAY1", "min": 1, "max": 30, "class": "tint1" },
+    { "type": "button", "name": "config1", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+  "fieldset": "Режим работы реле №2 Трехжильный провод",
+  "fields": [
+    { "label": "Задержка переключения на \"занято\" (сек):", "type": "number", "name": "TM_ON_RELAY2", "min": 0, "max": 30, "class": "tint2" },
+    { "label": "Задержка переключения на \"свободно\" (сек):", "type": "number", "name": "TM_OFF_RELAY2", "min": 0, "max": 30, "class": "tint2" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/relay0.png", "td_width": "50px" },
+          { "type": "radio", "name": "MODE_RELAY2", "value":"0", "td_width": "50px"},
+          { "type": "label", "value": "Выключить реле" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay1.png"},
+          { "type": "radio", "name": "MODE_RELAY2", "value":"1"},
+          { "type": "label", "value": "Переключение по умолчанию, постоянно ВКЛ или ВЫКЛ в режимах Занято-свободно" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay2.png"},
+          { "type": "radio", "name": "MODE_RELAY2", "value":"2"},
+          { "type": "label", "value": "Управление кнопкой открытия или закрытия ворот. Один раз" }
+        ],
+        [
+          { "type": "img", "value": "/img/relay4.png"},
+          { "type": "radio", "name": "MODE_RELAY2", "value":"4"},
+          { "type": "label", "value": "Импульсный режим" }
+        ]
+     ]
+    },
+    { "label": "Инверсия реле замкнуто/разомкнуто", "type": "checkbox", "name": "INVERSE_RELAY2", "label_class": "tb" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/relay5.png", "td_width": "50px" },
+          { "type": "radio", "name": "MODE_RELAY2", "value":"5", "td_width": "50px"},
+          { "type": "label", "value": "Управление кнопкой открытия или закрытия ворот в момент заезда и в момент выезда" }
+        ]
+       ]
+    },
+    { "label": "На сколько секунд замкнуть контакты. Для управления кнопкой закрытия или открытия ворот:", "type": "number", "name": "TM_PULSE_RELAY2", "min": 1, "max": 30, "class": "tint1" },
+    { "label": "На сколько секунд разамкнуть контакты. Только для импульсного режима:", "type": "number", "name": "TM_PAUSE_RELAY2", "min": 1, "max": 30, "class": "tint1" },
+    { "type": "button", "name": "config1", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+   "include": "/json/common_buttons.json"
+}
+]
+}
+

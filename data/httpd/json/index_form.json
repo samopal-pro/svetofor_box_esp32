@@ -1,0 +1,151 @@
+{
+  "title": "Датчик присутсвия",
+  "form": [
+{
+  "fieldset": "Настройка основной подсветки датчика",
+  "fields": [
+    { "label": "Включить короткие звуковые оповещения", "type": "checkbox", "name": "MP3_SHORT_MSG", "double": "config3" },
+    { "label": "Яркость 0-10", "type": "number", "name": "BRIGHTNESS", "min": 0, "max": 10, "class": "tint2" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "label", "value": "", "td_width": "50px" },
+          { "type": "label", "value": "Цвет в режиме \"Свободно\"", "td_width": "250px" },
+          { "type": "color_box", "name": "FREE_COLOR1", "target":"FREE_COLOR", "td_width": "50px"},
+          { "type": "color_box", "name": "FREE_COLOR2", "target":"FREE_COLOR", "td_width": "50px"},
+          { "type": "label", "value": "Настройка", "td_width": "100px" },
+          { "type": "color", "name": "FREE_COLOR" }
+        ],
+        [
+          { "type": "checkbox", "name": "CHECK_FREE_BLINK_COLOR" },
+          { "type": "label", "value": "Мигание в режиме \"Свободно\"" },
+          { "type": "color_box", "name": "FREE_BLINK_COLOR1", "target":"FREE_BLINK_COLOR"},
+          { "type": "color_box", "name": "FREE_BLINK_COLOR2", "target":"FREE_BLINK_COLOR"},
+          { "type": "label", "value": "Настройка" },
+          { "type": "color", "name": "FREE_BLINK_COLOR" }        
+        ],
+        [
+          { "type": "label", "value": "" },
+          { "type": "label", "value": "Цвет в режиме \"Занято\"" },
+          { "type": "color_box", "name": "BUSY_COLOR1", "target":"BUSY_COLOR"},
+          { "type": "color_box", "name": "BUSY_COLOR2", "target":"BUSY_COLOR"},
+          { "type": "label", "value": "Настройка" },
+          { "type": "color", "name": "BUSY_COLOR" }
+        ]
+      ]
+
+    },
+    { "type": "button", "name": "config", "label": "Сохранить", "mode": "save"}
+
+
+  ]
+},
+{
+  "fieldset": "Автокалибровка, запоминание расстояния как свободно",
+  "fields": [
+    { 
+      "type": "button", 
+      "name": "Calibrate", 
+      "label": "Активация автоматической калибровки расстояния" ,
+      "mode": "request", 
+      "url":"/cmd", 
+      "cmd": "calibrate",
+      "wait": "Калибровка сенсора. Страница перегрузится после калибровки"
+    },
+    { "label": "Количество тестовых замеров для калибровки:", "type": "number", "name": "NUM_CALIBR", "min": 1, "max": 60, "class": "tint2" },
+    { "type": "button", "name": "config", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+  "fieldset": "Если датчик не видит расстояние",
+  "fields": [
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/stat2.png", "td_width": "50px" },
+          { "type": "radio", "name": "NAN_MODE", "value":"1", "td_width": "50px"},
+          { "type": "label", "value": "Для автомобильной мойки, парковки. Если не видит расстояние - не переключается. (в этот момент мигает фиолетовым)" }
+        ],
+        [
+          { "type": "img", "value": "/img/stat3.png" },
+          { "type": "radio", "name": "NAN_MODE", "value":"2"},
+          { "type": "label", "value": "Для шлагбаума, ворот, блокиратора. Безопасный режим. Если не видит расстояние - переключается в \"занято\"" }
+        ],
+        [
+          { "type": "img", "value": "/img/stat1.png" },
+          { "type": "radio", "name": "NAN_MODE", "value":"3"},
+          { "type": "label", "value": "Для активации открытия ворот или шлагбаума с направлением луча в воздух без препятствия. Если не видит расстояние - переключается в \"свободно\"" }
+        ],
+        [
+          { "type": "img", "value": "/img/crimson.png" },
+          { "type": "checkbox", "name": "IS_COLOR_NAN"},
+          { "type": "label", "value": "Активация малиновой подсветки если датчик ничего не видит, поможет установить датчик относительно сливной решетки или пены на полу. Если датчик установлен на потолке и не светится малиновым цветом большую часть времени, то будет работать корректно. Если светится малиновым то нужно переставить датчик, установить площадку на сливную решетку 60х60см для замера расстояния до нее или установить более мощный сенсор" }
+        ]
+     ]
+
+    },
+    { "label": "Задержка между циклами опроса сенсора (сек):", "type": "number", "name": "TM_LOOP", "min": 1, "max": 30, "class": "tint2" },
+    { "type": "button", "name": "config", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+  "fieldset": "Режимы определения препятствия",
+  "fields": [
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/type1.png", "td_width": "50px" },
+          { "type": "radio", "name": "MEASURE_TYPE", "value":"1", "td_width": "50px"},
+          { "type": "label", "value": "Установка датчика на потолке" }
+        ]
+     ]
+
+    },
+    { "label": "*Расстояние от датчика до пола (мм):", "type": "number", "name": "GROUP_LEVEL", "min": 10, "max": 10000, "class": "tint2" },
+    { "label": "Минимальная высота на срабатывание (мм):", "type": "number", "name": "LIMIT_DISTANCE", "min": 10, "max": 10000, "class": "tint2" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/type2.png", "td_width": "50px" },
+          { "type": "radio", "name": "MEASURE_TYPE", "value":"2", "td_width": "50px"},
+          { "type": "label", "value": "Определяет как \"занято\" в заданном диапазоне:" }
+        ]
+     ]
+
+    },
+    { "label": "*От (мм):", "type": "number", "name": "MIN_DISTANCE1", "min": 10, "max": 10000, "class": "tint2" },
+    { "label": "До (мм):", "type": "number", "name": "MAX_DISTANCE1", "min": 10, "max": 10000, "class": "tint2" },
+    {
+      "type": "table",
+      "rows": [
+        [
+          { "type": "img", "value": "/img/type3.png", "td_width": "50px" },
+          { "type": "radio", "name": "MEASURE_TYPE", "value":"3", "td_width": "50px"},
+          { "type": "label", "value": "Определяет как \"свободно\" в заданном диапазоне:" }
+        ]
+     ]
+
+    },
+    { "label": "*От (мм):", "type": "number", "name": "MIN_DISTANCE2", "min": 10, "max": 10000, "class": "tint2" },
+    { "label": "До (мм):", "type": "number", "name": "MAX_DISTANCE2", "min": 10, "max": 10000, "class": "tint2" },
+    { "type": "button", "name": "config", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+  "fieldset": "Номера статусных светодиодов",
+  "fields": [
+    { "label": "Номер светодиода статуса точки доступа:", "type": "number", "name": "STAT_AP", "min": 0, "max": 100, "class": "tint2" },
+    { "label": "Номер светодиода статуса подключения к WiFi:", "type": "number", "name": "STAT_STA", "min": 0, "max": 100, "class": "tint2" },
+    { "type": "button", "name": "config", "label": "Сохранить", "mode": "save"}
+  ]
+},
+{
+   "include": "/json/common_buttons.json"
+}
+  ] 
+}
+
