@@ -1,3 +1,7 @@
+// Определяем MODULE_NAME до включения SDEBUG.h
+#define MODULE_NAME "SENSOR"
+#define MODULE_DEBUG_LEVEL DEBUG_OFF
+#include "src/Slib/SDEBUG.h"
 #include "WC_Sensors.h"
 
 // ===== MySensorValue =====

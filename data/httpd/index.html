@@ -12,6 +12,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   loadText('/header',"header");    
   loadText('/tail',"tail");  
   renderMenu('/json/menu.json');
+  startWaiting(2000);
   watchDistance('/distance',2000);
   renderForm('/json/index_form.json','/config','config');
 });

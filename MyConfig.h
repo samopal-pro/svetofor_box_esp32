@@ -1,7 +1,19 @@
 #pragma once
+/**
+ * Безопасная разница времени с учетом переполнения millis()
+ * Работает корректно до ~49 дней (период переполнения uint32_t)
+ * 
+ * Пример использования:
+ *   if (TIME_DIFF_MS(millis(), lastCheck) > INTERVAL_MS) {
+ *       // прошло больше INTERVAL_MS
+ *   }
+ */
+#define TIME_DIFF_MS(current, previous) ((uint32_t)(current - previous))
+#define TIME_EXPIRED_MS(current, previous) (TIME_DIFF_MS(current, previous) > 0 && TIME_DIFF_MS(current, previous) < 0x80000000)
 
 
-#define SDEBUG_LEVEL  0
+
+#define SDEBUG_LEVEL  2
 // Выдача сообщение сенсоров 1- иницилизация и ошибки, 2 - измерение параметров
 // Устаревшие макросы
 #define DEBUG_SENSORS 1

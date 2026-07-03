@@ -235,71 +235,12 @@ async function playMP3(_name,_arg1,_arg2="",_cmd="play"){
     }
 }
 
-let waitTimer = null;
-
-/*
- * Запуск опроса сервера
- */
-function startWaiting(interval = 1000) {
-    if (waitTimer) return;
-    waitTimer = setInterval(checkCommand, interval);
-}
-
-/*
- * Остановка опроса сервера
- */
-function stopWaiting() {
-    if (!waitTimer) return;
-    clearInterval(waitTimer);
-    waitTimer = null;
-}
-
-/*
- * Проверка наличия команды от ESP32
- */
-async function checkCommand() {
-    try {
-        const response = await fetch('/response', { cache: 'no-cache' });
-
-        if (response.status === 204) return;
-        if (response.status === 200)stopWaiting();
-        if (!response.ok)   return;
-
-        const { msg, cmd } = await response.json();
-
-        if (msg) showMessage(msg);
-
-        switch (cmd) {
-            case 'reload':
-                location.reload();
-                break;
-            case 'reload5':
-                setTimeout(() => { location.reload();  }, 5000);
-                break;
-
-            case 'home':
-                location.href = '/';
-                break;
-
-            case 'settings':
-                location.href = '/settings';
-                break;
-
-            default:
-                if (cmd)
-                    console.warn(`Неизвестная команда: ${cmd}`);
-        }
-    }
-    catch (err) {
-        console.error('Ошибка связи:', err);
-    }
-}
 
 /*
  * Показать временное сообщение
  * type: info, success, error
  */
-function showMessage(text, type = 'info') {
+function showMessage(text, type = 'info',tm=4000) {
 
     const icons = {
         info: 'ℹ️',
@@ -336,5 +277,136 @@ function showMessage(text, type = 'info') {
 
     box.onclick = close;
 
-    setTimeout(close, 4000);
+    setTimeout(close, tm);
+}
+
+// ===== ЗАМЕНИТЬ В app.js =====
+
+let waitTimer = null;
+
+/**
+ * Запуск опроса сервера (без остановки)
+ */
+function startWaiting(interval = 3000) {
+    if (waitTimer) return;
+    waitTimer = setInterval(checkRequest, interval);
+    console.log('Polling started with interval:', interval);
+}
+
+/**
+ * Остановка опроса сервера
+ */
+function stopWaiting() {
+    if (!waitTimer) return;
+    clearInterval(waitTimer);
+    waitTimer = null;
+    console.log('Polling stopped');
+}
+
+/**
+ * Проверка наличия команд от ESP32
+ */
+async function checkRequest() {
+    try {
+        const response = await fetch('/response', { 
+            cache: 'no-cache',
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.status === 204) return;  // Нет данных
+        
+        if (!response.ok) {
+            console.error('Server error:', response.status);
+            return;
+        }
+
+        const data = await response.json();
+        console.log('Received from ESP32:', data);
+        
+        // Обработка сообщения в статусную строку
+        if (data.log) {
+            log(data.log.text, data.log.type || 'info');
+        }
+        
+        // Обработка всплывающего сообщения
+        if (data.msg) {
+            showMessage(data.msg.text, data.msg.type || 'info', data.msg.timeout || 4000);
+        }
+        
+        // Обработка команд
+        if (data.cmd) {
+            const cmd = data.cmd;
+            
+            if (cmd.name === 'reload') {
+                const timeout = cmd.timeout || 0;
+                if (timeout > 0) {
+                    setTimeout(() => location.reload(), timeout);
+                } else {
+                    location.reload();
+                }
+            }
+            else if (cmd.name === 'load') {
+                const timeout = cmd.timeout || 0;
+                if (timeout > 0) {
+                    setTimeout(() => location.href = cmd.url, timeout);
+                } else {
+                    location.href = cmd.url;
+                }
+            }
+            else {
+                console.warn('Unknown command:', cmd.name);
+            }
+        }
+        
+        // Обработка изменений конфигурации
+        if (data.config) {
+            updateConfigValue(data.config.section, data.config.param, data.config.value);
+        }
+        
+    } catch (err) {
+        console.error('Polling error:', err);
+        // Не останавливаем опрос при ошибке
+    }
+}
+
+/**
+ * Обновить значение в форме конфигурации
+ */
+function updateConfigValue(section, param, value) {
+    console.log('Updating config:', section, param, value);
+    
+    // Проверяем, что секция указана и совпадает с текущей
+    if (!currentSection) {
+        console.warn('No current section, skipping update');
+        return;
+    }
+    
+    if (section !== currentSection) {
+        console.log(`Section mismatch: "${section}" != "${currentSection}", skipping`);
+        return;
+    }
+    
+    // Ищем элемент по имени
+    const element = document.querySelector(`[name="${param}"]`);
+    
+    if (!element) {
+        console.warn('Element not found:', param);
+        return;
+    }
+    
+    // Устанавливаем значение в зависимости от типа
+    if (element.type === 'checkbox') {
+        element.checked = (value === 'true' || value === true || value === '1');
+    } else if (element.type === 'radio') {
+        const radio = document.querySelector(`[name="${param}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+    } else {
+        element.value = value;
+    }
+    
+    // Вызываем событие изменения
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    console.log(`Параметр "${param}" обновлен: ${value}`, 'ok');
 }

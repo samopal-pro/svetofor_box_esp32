@@ -8,14 +8,9 @@
  */
 
 
-#include <WebServer.h>
-#include <LittleFS.h>
-#include <ArduinoJson.h>
-//#include <Update.h>
 
 #include "SHTTP.h"
 
-extern WebServer webServer;
 
 File uploadFile;
 

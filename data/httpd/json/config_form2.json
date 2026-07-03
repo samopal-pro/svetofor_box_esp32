@@ -105,7 +105,7 @@
     { "type": "password", "label": "Пароль для входа с правами опреатора:", "name": "ESP_PASS1",  "width": "153px" },
     { "type": "password", "label": "Пароль для входа с правами администратора:", "name": "ESP_PASS2",  "width": "153px" },
     { "type": "password", "label": "Пароль для входа с правами суперадминистратора:", "name": "ESP_PASS3",  "width": "153px" },
-    { "type": "text", "label": "Наименование устройства:", "name": "ESP_NAME",  "width": "350px", "cmd_is_null": "ap_name", "request":"/cmd" },
+    { "type": "text", "label": "Наименование устройства:", "name": "ESP_NAME",  "width": "350px" },
     { "type": "button", "name": "config2", "label": "Сохранить", "mode": "save"}
     ]
 },

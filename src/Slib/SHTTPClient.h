@@ -49,4 +49,6 @@ private:
         WiFiClient& client,
         HttpResponse& response
     );
+
+    static bool parseHttpResponse(const String& Str, HttpResponse& response);
 };

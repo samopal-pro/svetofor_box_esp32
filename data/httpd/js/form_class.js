@@ -46,11 +46,18 @@ async function loadSchema(url) {
 
     return schema;
 }
+
+// Глобальная переменная для отслеживания текущей секции конфигурации
+let currentSection = null;
+
 async function renderForm(schemaUrl, dataUrl, dataSection, containerId='formContainer') {
     let dataJson = {};
     let data = {};
     
-//    const schema = await fetch(schemaUrl).then(r => r.json());
+    // Устанавливаем глобальную секцию
+    currentSection = dataSection || null;
+    console.log('Current config section set to:', currentSection);
+    
     const schema = await loadSchema(schemaUrl);
 
     if( dataUrl !== '' ){
@@ -448,10 +455,10 @@ class ButtonField extends FormField {
         else return;
         if( this.config.log )showMessage(this.config.log);
         if( this.config.reload )setTimeout(() => { location.reload();  }, this.config.reload);
-        if( this.config.wait ){
-            showMessage(this.config.wait);
-            startWaiting(1000);
-        }
+//        if( this.config.wait ){
+//            showMessage(this.config.wait);
+//            startWaiting(1000);
+//        }
 
         const body = new URLSearchParams();
 

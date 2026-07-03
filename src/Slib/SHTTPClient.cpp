@@ -179,14 +179,17 @@ void SimpleHttpClient::readResponse(
             return;
         }
 
-        delay(1);
+        vTaskDelay(1);
     }
+    String s = "";
+    s = client.readString();
 
+
+/*    
     String statusLine = client.readStringUntil('\n');
-
+    
     int p1 = statusLine.indexOf(' ');
     int p2 = statusLine.indexOf(' ', p1 + 1);
-
     if (p1 > 0 && p2 > p1) {
         response.statusCode =
             statusLine.substring(p1 + 1, p2).toInt();
@@ -211,6 +214,87 @@ void SimpleHttpClient::readResponse(
 
         delay(1);
     }
-
+*/
+    parseHttpResponse(s,response);
     client.stop();
+}
+
+
+
+
+
+bool SimpleHttpClient::parseHttpResponse(const String& Str, HttpResponse& response) {
+    // Отладочный вывод входной строки
+//    Serial.println("=== DEBUG: Input HTTP Response ===");
+//    Serial.println(Str);
+//    Serial.println("=== DEBUG: End of Input ===");
+//    Serial.println();
+    
+    // Сбрасываем значения по умолчанию
+    response.statusCode = -1;
+    response.headers = "";
+    response.body = "";
+    
+    // Находим конец первой строки (статусная строка)
+    int firstLineEnd = Str.indexOf("\r\n");
+    if (firstLineEnd == -1) {
+        Serial.println("DEBUG: Failed to find first line ending (\\r\\n)");
+        return false; // Невалидный ответ
+    }
+    
+    // Парсим статусную строку: "HTTP/1.1 200 OK"
+    String statusLine = Str.substring(0, firstLineEnd);
+//    Serial.print("DEBUG: Status Line: ");
+//    Serial.println(statusLine);
+    
+    int firstSpace = statusLine.indexOf(' ');
+    int secondSpace = statusLine.indexOf(' ', firstSpace + 1);
+    
+    if (firstSpace != -1 && secondSpace != -1) {
+        String codeStr = statusLine.substring(firstSpace + 1, secondSpace);
+        response.statusCode = codeStr.toInt();
+//        Serial.print("DEBUG: Parsed Status Code: ");
+//        Serial.println(response.statusCode);
+    } else if (firstSpace != -1) {
+        String codeStr = statusLine.substring(firstSpace + 1);
+        response.statusCode = codeStr.toInt();
+//        Serial.print("DEBUG: Parsed Status Code (no second space): ");
+//        Serial.println(response.statusCode);
+    } else {
+//        Serial.println("DEBUG: Invalid status line format");
+        return false; // Неверный формат статусной строки
+    }
+    
+    // Находим разделитель между заголовками и телом (пустая строка)
+    int headersEnd = Str.indexOf("\r\n\r\n");
+    if (headersEnd == -1) {
+//        Serial.println("DEBUG: \\r\\n\\r\\n separator not found, trying \\n\\n");
+        headersEnd = Str.indexOf("\n\n");
+        if (headersEnd == -1) {
+//            Serial.println("DEBUG: Failed to find headers/body separator");
+            return false; // Не можем найти тело
+        }
+        response.headers = Str.substring(firstLineEnd + 2, headersEnd);
+        response.body = Str.substring(headersEnd + 2);
+//        Serial.println("DEBUG: Used \\n\\n as separator");
+    } else {
+        response.headers = Str.substring(firstLineEnd + 2, headersEnd);
+        response.body = Str.substring(headersEnd + 4);
+//        Serial.println("DEBUG: Used \\r\\n\\r\\n as separator");
+    }
+    
+    response.body.trim();
+    
+    // Отладочный вывод полей структуры
+//    Serial.println("=== DEBUG: Parsed HttpResponse Fields ===");
+//    Serial.print("Status Code: ");
+//    Serial.println(response.statusCode);
+//    Serial.println("Headers:");
+//    Serial.println(response.headers);
+//    Serial.println("Body:");
+//    Serial.println(response.body);
+//    Serial.println("=== DEBUG: End of Parsed Fields ===");
+//    Serial.println();
+    
+    return true;
 }

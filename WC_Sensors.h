@@ -7,10 +7,6 @@
 #include "src/TF/TFLI2C.h"
 #include "src/LD2413/LD2413.h"
 
-// Определяем MODULE_NAME до включения SDEBUG.h
-#define MODULE_NAME "SENSOR"
-#define MODULE_DEBUG_LEVEL DEBUG_OFF
-#include "src/Slib/SDEBUG.h"
 
 /**
  * @brief Класс для хранения и обработки значений датчика

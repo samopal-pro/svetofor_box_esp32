@@ -1,7 +1,10 @@
 #pragma once
 
-#include <WebServer.h>
+#include "../Webserver/WebServer.h"
 
+#include <LittleFS.h>
+#include <ArduinoJson.h>
+//#include <Update.h>
 
 extern WebServer webServer;
 

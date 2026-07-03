@@ -1,101 +1,27 @@
 /**
+ * @file WC_Event.cpp
+ * @brief Реализация классов TEvent, TEventRGB, TEventMP3.
+ * 
  * Проект контроллера автомоек. Версия 10 от 2025
  * Copyright (C) 2020 Алексей Шихарбеев
  * http://samopal.pro
  */
-
-
 #include "WC_Event.h"
 
-// ======================================================================
-// Вспомогательные функции для безопасной работы с временем
-// ======================================================================
+
+#define MODULE_NAME "EVENT"
+#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
+#include "src/Slib/SDEBUG.h"
+
+//=================================================================================================
+// Реализация класса TEvent
+//=================================================================================================
 
 /**
- * Безопасная проверка истечения таймера с учетом переполнения millis()
- * и автоматическим сбросом таймера при истечении
- * 
- * @param timer    Ссылка на переменную таймера (будет обновлена при истечении)
- * @param interval Интервал в миллисекундах
- * @return true если интервал истек
- */
-bool TEvent::checkTimer(uint32_t &timer, uint32_t interval) {
-    uint32_t current = millis();
-    
-    // Проверка с учетом переполнения millis()
-    // Вычитание беззнаковых чисел корректно обрабатывает переполнение
-    if (current - timer >= interval) {
-        timer = current;  // Обновляем таймер
-        return true;
-    }
-    return false;
-}
-
-/**
- * Безопасная проверка истечения времени без изменения таймера
- * 
- * @param startTime Начальное время
- * @param interval  Интервал в миллисекундах
- * @return true если интервал истек
- */
-bool TEvent::isTimeUp(uint32_t startTime, uint32_t interval) {
-    return (millis() - startTime) >= interval;
-}
-
-/**
- * Безопасный запуск таймера
- * 
- * @param timer Ссылка на переменную таймера
- */
-void TEvent::startTimer(uint32_t &timer) {
-    timer = millis();
-}
-
-// Аналогичные методы для TEventRGB
-bool TEventRGB::checkTimer(uint32_t &timer, uint32_t interval) {
-    uint32_t current = millis();
-    if (current - timer >= interval) {
-        timer = current;
-        return true;
-    }
-    return false;
-}
-
-bool TEventRGB::isTimeUp(uint32_t startTime, uint32_t interval) {
-    return (millis() - startTime) >= interval;
-}
-
-void TEventRGB::startTimer(uint32_t &timer) {
-    timer = millis();
-}
-
-// Аналогичные методы для TEventMP3
-bool TEventMP3::checkTimer(uint32_t &timer, uint32_t interval) {
-    uint32_t current = millis();
-    if (current - timer >= interval) {
-        timer = current;
-        return true;
-    }
-    return false;
-}
-
-bool TEventMP3::isTimeUp(uint32_t startTime, uint32_t interval) {
-    return (millis() - startTime) >= interval;
-}
-
-void TEventMP3::startTimer(uint32_t &timer) {
-    timer = millis();
-}
-
-// ======================================================================
-// Класс TEvent - Базовое управление событиями
-// ======================================================================
-
-/**
- * Конструктор класса TEvent
- * @param _delayOn   Задержка при включении события, мс
- * @param _delayOff  Задержка при выключении события, мс
- * @param _handle    Функция обратного вызова при изменении состояния
+ * @brief Конструктор класса TEvent.
+ * @param _delayOn   Задержка при включении события, мс.
+ * @param _delayOff  Задержка при выключении события, мс.
+ * @param _handle    Функция-обработчик, вызываемая при изменении состояния (вкл/выкл).
  */
 TEvent::TEvent(uint32_t _delayOn, uint32_t _delayOff, void (*_handle)(bool)) {
     DelayOn   = _delayOn;
@@ -111,22 +37,21 @@ TEvent::TEvent(uint32_t _delayOn, uint32_t _delayOff, void (*_handle)(bool)) {
 }
 
 /**
- * Установка типа события
- * @param _type      Тип события (ET_NORMAL, ET_PULSE, ET_PWM и т.д.)
- * @param _timeOn    Длительность импульса включения, мс
- * @param _timeOff   Длительность паузы между импульсами, мс
+ * @brief Изменение типа события и его временных параметров.
+ * @param _type    Тип события (ET_NORMAL, ET_PULSE, ET_PWM и т.д.).
+ * @param _timeOn  Длительность импульса/включения, мс (для PULSE, PWM и т.д.).
+ * @param _timeOff Длительность паузы, мс (для PWM).
  */
 void TEvent::setType(TEVENT_TYPE_t _type, uint32_t _timeOn, uint32_t _timeOff) {
    Type    = _type;
    TimeOn  = _timeOn;
    TimeOff = _timeOff;
-   
-   LOG_DEBUGLN("TEvent type=%d t1=%lu t2=%lu", Type, TimeOn, TimeOff);
+   LOG_DEBUGLN("TEvent Type: %d, TimeOn: %d, TimeOff: %d", (int)Type, TimeOn, TimeOff);
 }
 
 /**
- * Проверка изменения состояния события
- * @return true если состояние изменилось с последней проверки
+ * @brief Сбрасывает флаг isChangeState и возвращает его предыдущее значение.
+ * @return true, если состояние изменилось с момента последнего вызова.
  */
 bool TEvent::changeState() {
    bool ret = isChangeState;
@@ -135,26 +60,24 @@ bool TEvent::changeState() {
 }
 
 /**
- * Включение события (без задержки)
+ * @brief Включает событие (с учетом DelayOn).
  */
 void TEvent::on() {
     if (Type == ET_DISABLE) return;
     if (State == ES_WAIT_ON || State == ES_ON) return;
     
-    startTimer(msOn);
+    msOn = millis();
     if (DelayOn == 0) {
        State = ES_ON;
        setOn();
     } else {
        State = ES_WAIT_ON;
     }
-    
-    LOG_DEBUGLN("TEvent::on() State=%d DelayOn=%lu", State, DelayOn);
 }
 
 /**
- * Включение события с указанием задержки
- * @param _delay Задержка перед включением, мс
+ * @brief Включает событие, устанавливая задержку включения.
+ * @param _delay Задержка включения, мс.
  */
 void TEvent::on(uint32_t _delay) {
    DelayOn = _delay;
@@ -162,26 +85,24 @@ void TEvent::on(uint32_t _delay) {
 }
 
 /**
- * Выключение события (без задержки)
+ * @brief Выключает событие (с учетом DelayOff).
  */
 void TEvent::off() {
     if (Type == ET_DISABLE) return;
     if (State == ES_WAIT_OFF || State == ES_OFF) return;
     
-    startTimer(msOff);
+    msOff = millis();
     if (DelayOff == 0) {
        State = ES_OFF;
        setOff();
     } else {
        State = ES_WAIT_OFF;
     }
-    
-    LOG_DEBUGLN("TEvent::off() State=%d DelayOff=%lu", State, DelayOff);
 }
 
 /**
- * Выключение события с указанием задержки
- * @param _delay Задержка перед выключением, мс
+ * @brief Выключает событие, устанавливая задержку выключения.
+ * @param _delay Задержка выключения, мс.
  */
 void TEvent::off(uint32_t _delay) {
    DelayOff = _delay;
@@ -189,15 +110,14 @@ void TEvent::off(uint32_t _delay) {
 }
 
 /**
- * Сброс состояния события
+ * @brief Принудительно сбрасывает состояние события в ES_NONE.
  */
 void TEvent::reset() {
     State = ES_NONE;
-    LOG_DEBUGLN("TEvent::reset()");
 }
 
 /**
- * Внутренний метод включения
+ * @brief Внутренний метод для физического включения. Вызывает обработчик, если он задан.
  */
 void TEvent::setOn() {
    if (Handle != NULL) Handle(true);
@@ -205,7 +125,7 @@ void TEvent::setOn() {
 }
 
 /**
- * Внутренний метод выключения
+ * @brief Внутренний метод для физического выключения. Вызывает обработчик, только если до этого был включен.
  */
 void TEvent::setOff() {
    if (Handle != NULL && isOn) Handle(false);
@@ -213,82 +133,66 @@ void TEvent::setOff() {
 }
 
 /**
- * Основной цикл обработки события
- * Использует безопасные методы работы с временем для защиты от переполнения millis()
- * 
- * @return Текущее состояние события
+ * @brief Основной метод конечного автомата. Должен вызываться в loop().
+ * @return Текущий статус события.
  */
 TEVENT_STATUS_t TEvent::loop() {
+   uint32_t _ms = millis();
    switch (State) {
        case ES_WAIT_ON:
-          // Безопасная проверка истечения задержки включения
-          if (checkTimer(msOn, DelayOn)) {
+          if (TIME_DIFF_MS(_ms, msOn) > DelayOn) {
              State = ES_ON;
+             msOn  = _ms;
              setOn();
-             LOG_DEBUGLN("TEvent WAIT_ON -> ON");
           }
           break;
           
        case ES_WAIT_OFF:
-          // Исправлено: используем msOff вместо msOn
-          if (checkTimer(msOff, DelayOff)) {
+          // ИСПРАВЛЕНО: Теперь корректно проверяем разницу от msOff, а не msOn.
+          if (TIME_DIFF_MS(_ms, msOff) > DelayOff) {
              State = ES_OFF;
+             msOff = _ms; // Обновляем время последнего off-события
              setOff();
-             LOG_DEBUGLN("TEvent WAIT_OFF -> OFF");
           }
           break;
           
        case ES_ON:
-          // Обработка импульсных режимов
-          if ((Type == ET_PULSE || Type == ET_PULSE2 || Type == ET_PWM) && 
-              isOn && checkTimer(msOn, TimeOn)) {
+          // Логика для импульсных и ШИМ-режимов
+          if ((Type == ET_PULSE || Type == ET_PULSE2 || Type == ET_PWM) && isOn && (TIME_DIFF_MS(_ms, msOn) > TimeOn)) {
+             msOn = _ms;
              setOff();
-             LOG_DEBUGLN("TEvent ON pulse end");
-          } 
-          // Обработка PWM режима
-          else if (Type == ET_PWM && !isOn && checkTimer(msOn, TimeOff)) {
+          } else if ((Type == ET_PWM) && !isOn && (TIME_DIFF_MS(_ms, msOn) > TimeOff)) {
+             msOn = _ms;
              setOn();
-             LOG_DEBUGLN("TEvent PWM toggle");
           }
           break;
-          
+
        case ES_OFF:
-          // Обработка PULSE_OFF режима
-          if (Type == ET_PULSE_OFF && !isOn) {
-             startTimer(msOn);
+          // Логика для ET_PULSE_OFF (импульс при выключении) и ET_PULSE2 (двойной импульс)
+          if ((Type == ET_PULSE_OFF) && !isOn) {
+             msOn = _ms;
              setOn();
-             LOG_DEBUGLN("TEvent PULSE_OFF start");
-          } 
-          // Обработка PULSE2 режима
-          else if (Type == ET_PULSE2) {
-             if (!isOn && checkTimer(msOff, TimeOff)) {
-                setOn();
-                LOG_DEBUGLN("TEvent PULSE2 on");
-             } else if (isOn && checkTimer(msOff, TimeOff)) {
-                setOff();
-                LOG_DEBUGLN("TEvent PULSE2 off");
-             }
-          } 
-          // Завершение PULSE_OFF
-          else if (Type == ET_PULSE_OFF && isOn && checkTimer(msOn, TimeOn)) {
+          } else if ((Type == ET_PULSE2) && !isOn && (TIME_DIFF_MS(_ms, msOn) <= TimeOff)) {
+             setOn();
+          } else if ((Type == ET_PULSE2) && isOn && (TIME_DIFF_MS(_ms, msOn) > TimeOff)) {
              setOff();
-             LOG_DEBUGLN("TEvent PULSE_OFF end");
+          } else if ((Type == ET_PULSE_OFF) && isOn && (TIME_DIFF_MS(_ms, msOn) > TimeOn)) {
+             msOn = _ms;
+             setOff();
           }
           break;
    }
-   
-   // Отслеживание изменения состояния
+
    if (SaveState != State) {
        isChangeState = true;
-       SaveState = State;
+       SaveState     = State;
    }
-   
    return State;
 }
 
 /**
- * Копирование настроек события в другой объект
- * @param dist Указатель на целевой объект TEvent
+ * @brief Копирует настройки в другой объект TEvent.
+ * @param dist Указатель на целевой объект.
  */
 void TEvent::copyTo(TEvent *dist) {
     dist->Type     = Type;
@@ -299,47 +203,45 @@ void TEvent::copyTo(TEvent *dist) {
     dist->Handle   = Handle;
 }
 
-// ======================================================================
-// Класс TEventRGB - Управление RGB лентой
-// ======================================================================
+//=================================================================================================
+// Реализация класса TEventRGB
+//=================================================================================================
 
 /**
- * Конструктор класса TEventRGB
- * @param _pin   Пин для управления лентой
- * @param _num   Количество светодиодов в ленте
- * @param _first Индекс первого светодиода (если 0 - все светодиоды, иначе первые _first зарезервированы)
+ * @brief Конструктор класса TEventRGB.
+ * @param _pin Номер пина для управления лентой.
+ * @param _num Количество светодиодов в ленте.
+ * @param _first Индекс первого пользовательского светодиода (первые два могут быть служебными).
  */
 TEventRGB::TEventRGB(uint8_t _pin, int _num, int _first) {
    Strip = new Adafruit_NeoPixel(_num, _pin, NEO_GRB + NEO_KHZ800);
    Num           = _num;
    First         = _first;
-   TimerOn      = 0;
-   TimerOff     = 0;
-   Color1       = COLOR_NONE;
-   Color2       = COLOR_NONE;
-   ColorBlink1  = COLOR_NONE;
-   ColorBlink2  = COLOR_NONE;
-   ColorMP3     = COLOR_NONE;
-   State        = ES_NONE;
-   msOn         = 0;
-   msOff        = 0;
-   isRainbow    = false;
-   isMP3        = false;
-   HueRainbow   = 0;
-   IncRainbow   = 65536 / Num * 2;
-   isBlink0     = false;
-   BlinkCount   = 0;
-   TimerRainbow = 0;
-   NumAp        = LED_STAT_AP1;
-   NumSta       = LED_STAT_STA1;
-   
-   LOG_DEBUGLN("TEventRGB created: pin=%d num=%d first=%d", _pin, _num, _first);
+   TimerOn       = 0;
+   TimerOff      = 0;
+   Color1        = COLOR_NONE;
+   Color2        = COLOR_NONE;
+   ColorBlink1   = COLOR_NONE;
+   ColorBlink2   = COLOR_NONE;
+   ColorMP3      = COLOR_NONE;
+   State         = ES_NONE;
+   msOn          = 0;
+   msOff         = 0;
+   isRainbow     = false;
+   isMP3         = false;
+   HueRainbow    = 0;
+   IncRainbow    = 65536 / Num * 2;
+   isBlink0      = false;
+   BlinkCount    = 0;
+   TimerRainbow  = 0;
+   NumAp         = LED_STAT_AP1;
+   NumSta        = LED_STAT_STA1;
 }
 
 /**
- * Установка цветов для четных и нечетных светодиодов
- * @param _color1 Цвет для нечетных светодиодов
- * @param _color2 Цвет для четных светодиодов
+ * @brief Устанавливает цвета для четных и нечетных светодиодов, кроме служебных.
+ * @param _color1 Цвет для нечетных светодиодов.
+ * @param _color2 Цвет для четных светодиодов.
  */
 void TEventRGB::setColor(uint32_t _color1, uint32_t _color2) {
    for (int i = 0; i < Num; i++) {
@@ -354,9 +256,9 @@ void TEventRGB::setColor(uint32_t _color1, uint32_t _color2) {
 }
 
 /**
- * Установка цвета первого зарезервированного светодиода
- * @param _color Цвет светодиода
- * @param _blink Флаг мигания
+ * @brief Устанавливает цвет для служебного светодиода 0 (например, статус AP).
+ * @param _color Цвет светодиода.
+ * @param _blink Если true, светодиод будет мигать при каждом вызове loop().
  */
 void TEventRGB::setColor0(uint32_t _color, bool _blink) {
    Color0   = _color;
@@ -366,8 +268,8 @@ void TEventRGB::setColor0(uint32_t _color, bool _blink) {
 }
 
 /**
- * Установка цвета второго зарезервированного светодиода
- * @param _color Цвет светодиода
+ * @brief Устанавливает цвет для служебного светодиода 1 (например, статус STA).
+ * @param _color Цвет светодиода.
  */
 void TEventRGB::setColor1(uint32_t _color) {
    Strip->setPixelColor(NumSta, setBrightness(_color, LED_STAT_BRIGHTNESS));
@@ -375,19 +277,15 @@ void TEventRGB::setColor1(uint32_t _color) {
 }
 
 /**
- * Полная установка параметров RGB ленты
- * @param _color1     Основной цвет 1
- * @param _color2     Основной цвет 2
- * @param _color11    Цвет мигания 1
- * @param _color12    Цвет мигания 2
- * @param _timer_on   Длительность включения при мигании
- * @param _timer_off  Длительность выключения при мигании
+ * @brief Устанавливает основное состояние ленты с цветами и таймерами.
+ * @param _color1, _color2 Основные цвета.
+ * @param _color11, _color12 Цвета для мигания.
+ * @param _timer_on Время свечения основным цветом, мс.
+ * @param _timer_off Время свечения цветом мигания, мс.
  */
-void TEventRGB::set(uint32_t _color1, uint32_t _color2, uint32_t _color11, 
-                    uint32_t _color12, uint32_t _timer_on, uint32_t _timer_off) {
-   LOG_DEBUGLN("SetRGB #%lX #%lX #%lX #%lX %lu %lu", 
-               _color1, _color2, _color11, _color12, _timer_on, _timer_off);
-   
+void TEventRGB::set(uint32_t _color1, uint32_t _color2, uint32_t _color11, uint32_t _color12, uint32_t _timer_on, uint32_t _timer_off) {
+   LOG_INFOLN("SetRGB: C1=#%06lX, C2=#%06lX, B1=#%06lX, B2=#%06lX, T_on=%d, T_off=%d", 
+              _color1, _color2, _color11, _color12, _timer_on, _timer_off);
    TimerOn      = _timer_on;
    TimerOff     = _timer_off;
    Color1       = _color1;
@@ -396,18 +294,17 @@ void TEventRGB::set(uint32_t _color1, uint32_t _color2, uint32_t _color11,
    ColorBlink2  = _color12;
    setColor(Color1, Color2);
    msRainbowOn  = 0;
-   startTimer(msOn);
+   msOn         = millis();
    msOff        = 0;
 }
 
 /**
- * Установка цвета для режима MP3
- * @param _color Цвет для мигания в режиме MP3 (COLOR_NONE - отключить)
+ * @brief Устанавливает цвет для режима MP3-мигания.
+ * @param _color Цвет для мигания. COLOR_NONE отключает режим.
  */
 void TEventRGB::setMP3(uint32_t _color) {
     ColorMP3 = _color;
-    LOG_DEBUGLN("SetRGB MP3 #%lX", _color);
-    
+    LOG_INFOLN("SetRGB MP3: #%06lX", _color);
     if (ColorMP3 == COLOR_NONE) {
        isMP3 = false;
        setColor(Color1, Color2);
@@ -417,24 +314,23 @@ void TEventRGB::setMP3(uint32_t _color) {
 }
 
 /**
- * Включение/выключение эффекта радуги
- * @param _flag  true - включить, false - выключить
- * @param _timer Длительность эффекта (0 - бесконечно)
+ * @brief Включает или выключает эффект радуги.
+ * @param _flag true для включения.
+ * @param _timer Длительность эффекта. 0 - бесконечно.
  */
 void TEventRGB::setRainbow(bool _flag, uint32_t _timer) {
-   LOG_DEBUGLN("SetRGB Rainbow %d", _flag);
+   LOG_INFOLN("SetRGB Rainbow: %d", _flag);
    isRainbow = _flag;
-   
    if (isRainbow) {
       TimerRainbow = _timer;
-      startTimer(msRainbowOn);
-      HueRainbow = 0;   
+      msRainbowOn  = millis();
+      HueRainbow   = 0;   
    }
 }
 
 /**
- * Установка яркости ленты
- * @param br Уровень яркости (0-10)
+ * @brief Устанавливает яркость ленты.
+ * @param br Уровень яркости от 0 до 10.
  */
 void TEventRGB::setBrightness(int br) {
    if (br < 0) Strip->setBrightness(0);
@@ -443,25 +339,22 @@ void TEventRGB::setBrightness(int br) {
 }
 
 /**
- * Основной цикл обработки RGB эффектов
- * Использует безопасные методы работы с временем для защиты от переполнения millis()
- * 
- * @return Тип текущего RGB события
+ * @brief Основной метод loop для обработки эффектов ленты.
+ * @return Текущий тип RGB-события.
  */
 TEVENT_RGB_TYPE_t TEventRGB::loop() {
-   // Эффект радуги (имеет наивысший приоритет)
+   uint32_t _ms = millis();
+
+   // 1. Обработка эффекта радуги
    if (isRainbow) {
-      // Проверка таймера радуги
-      if (TimerRainbow > 0 && checkTimer(msRainbowOn, TimerRainbow)) {
+      if (TimerRainbow > 0 && TIME_DIFF_MS(_ms, msRainbowOn) > TimerRainbow) {
           setRainbow(false);
           setColor(Color1, Color2);
-          msOff = 0;
-          startTimer(msOn);
+          msOff       = 0;
+          msOn        = _ms;
           msRainbowOn = 0;
           return ERT_RAINBOW;
       }
-      
-      // Отрисовка радуги
       uint16_t h = HueRainbow;
       for (int i = 0; i < Num; i++) {
           if (First > 0 && (i == NumAp || i == NumSta)) continue;
@@ -472,8 +365,8 @@ TEVENT_RGB_TYPE_t TEventRGB::loop() {
       HueRainbow += IncRainbow;
       return ERT_RAINBOW;
    }
-   
-   // Мигание первого зарезервированного светодиода
+
+   // 2. Мигание первого служебного светодиода с частотой вызова loop()
    if (isBlink0) {
        if (BlinkCount % 2) {
            Strip->setPixelColor(NumAp, setBrightness(Color0, LED_STAT_BRIGHTNESS));
@@ -484,32 +377,32 @@ TEVENT_RGB_TYPE_t TEventRGB::loop() {
        BlinkCount++;
    }
 
-   // Мигание в режиме MP3
+   // 3. Мигание в режиме MP3 с частотой TIMER_MP3
    if (isMP3 && ColorMP3 != COLOR_NONE) {
-      if (msOn > 0 && checkTimer(msOn, TIMER_MP3)) {
+      if (msOn > 0 && TIME_DIFF_MS(_ms, msOn) > TIMER_MP3) {
          msOn  = 0;
-         startTimer(msOff);
+         msOff = _ms;
          setColor(ColorMP3, ColorMP3);
       }
-      if (msOff > 0 && checkTimer(msOff, TIMER_MP3)) {
-         msOff  = 0;
-         startTimer(msOn);
+      if (msOff > 0 && TIME_DIFF_MS(_ms, msOff) > TIMER_MP3) {
+         msOff = 0;
+         msOn  = _ms;
          setColor(Color1, Color2);
       }
       return ERT_MP3;
    }
-   
-   // Обычное мигание
+
+   // 4. Обычное мигание с заданными таймерами
    if (TimerOn > 0) {
-      if (msOn > 0 && checkTimer(msOn, TimerOn)) {
+      if (msOn > 0 && TIME_DIFF_MS(_ms, msOn) > TimerOn) {
          msOn  = 0;
-         startTimer(msOff);
+         msOff = _ms;
          setColor(ColorBlink1, ColorBlink2);
       }
-      if (msOff > 0 && checkTimer(msOff, TimerOff)) {
-         msOff  = 0;
-         startTimer(msOn);
-         setColor(Color1, Color2);
+      if (msOff > 0 && TIME_DIFF_MS(_ms, msOff) > TimerOff) {
+         msOff = 0;
+         msOn  = _ms;
+         setColor(Color1, Color1);
       }
       return ERT_BLINK;
    }
@@ -518,8 +411,8 @@ TEVENT_RGB_TYPE_t TEventRGB::loop() {
 }
 
 /**
- * Копирование настроек в другой объект RGB
- * @param dist Указатель на целевой объект TEventRGB
+ * @brief Копирует состояние эффектов в другой объект TEventRGB.
+ * @param dist Указатель на целевой объект.
  */
 void TEventRGB::copyTo(TEventRGB *dist) {
    dist->Color1      = Color1;
@@ -532,41 +425,36 @@ void TEventRGB::copyTo(TEventRGB *dist) {
 }
 
 /**
- * Установка настроек из другого объекта RGB
- * @param src Указатель на исходный объект TEventRGB
+ * @brief Применяет состояние эффектов из другого объекта TEventRGB.
+ * @param src Указатель на исходный объект.
  */
 void TEventRGB::set(TEventRGB *src) {
-   set(src->Color1, src->Color2, src->ColorBlink1, src->ColorBlink2, 
-       src->TimerOn, src->TimerOff);
+   set(src->Color1, src->Color2, src->ColorBlink1, src->ColorBlink2, src->TimerOn, src->TimerOff);
 }
 
 /**
- * Коррекция яркости цвета
- * @param color Исходный цвет
- * @param level Уровень яркости (0-10)
- * @return Скорректированный цвет
+ * @brief Масштабирует яркость цвета на заданный уровень (0-10).
+ * @param color Исходный цвет.
+ * @param level Уровень яркости (0-10).
+ * @return Результирующий цвет.
  */
 uint32_t TEventRGB::setBrightness(uint32_t color, uint8_t level) {
     if (level > 10) level = 10;
-
     uint8_t r = (color >> 16) & 0xFF;
     uint8_t g = (color >> 8) & 0xFF;
     uint8_t b = color & 0xFF;
-
     r = (r * level) / 10;
     g = (g * level) / 10;
     b = (b * level) / 10;
-
     return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
 }
 
 /**
- * Изменение позиции первого зарезервированного светодиода
- * @param _ap Новый индекс светодиода
+ * @brief Меняет позицию служебного светодиода "точки доступа" (AP).
+ * @param _ap Новый индекс светодиода.
  */
 void TEventRGB::setNumAp(int _ap) {
    if (NumAp == _ap) return;
-   
    if (_ap >= 0 && _ap < Num) {
       uint32_t _color1 = Strip->getPixelColor(NumAp);
       uint32_t _color2 = Strip->getPixelColor(_ap);
@@ -574,16 +462,15 @@ void TEventRGB::setNumAp(int _ap) {
       Strip->setPixelColor(_ap, _color1);
       NumAp = _ap;
    } 
-   Strip->show();
+   Strip->show();   
 }
 
 /**
- * Изменение позиции второго зарезервированного светодиода
- * @param _sta Новый индекс светодиода
+ * @brief Меняет позицию служебного светодиода "станции" (STA).
+ * @param _sta Новый индекс светодиода.
  */
 void TEventRGB::setNumSta(int _sta) {
    if (NumSta == _sta) return;
-   
    if (_sta >= 0 && _sta < Num) {
       uint32_t _color1 = Strip->getPixelColor(NumSta);
       uint32_t _color2 = Strip->getPixelColor(_sta);
@@ -594,19 +481,18 @@ void TEventRGB::setNumSta(int _sta) {
    Strip->show();
 }
 
-// ======================================================================
-// Класс TEventMP3 - Управление MP3 плеером
-// ======================================================================
+//=================================================================================================
+// Реализация класса TEventMP3
+//=================================================================================================
 
 /**
- * Конструктор класса TEventMP3
- * @param _stream  Поток для связи с плеером (обычно Serial)
- * @param _gpio    Режим определения состояния через GPIO
- * @param _pin     Пин GPIO для определения состояния
- * @param _handle  Функция обратного вызова
+ * @brief Конструктор класса TEventMP3.
+ * @param _stream Поток для связи с DFPlayer.
+ * @param _gpio Тип управления через GPIO.
+ * @param _pin Номер пина для GPIO.
+ * @param _handle Функция-обработчик для управления внешними событиями (например, светодиодом).
  */
-TEventMP3::TEventMP3(Stream &_stream, TEVENT_MP3_GPIO_t _gpio, int _pin, 
-                     void (*_handle)(bool)) {
+TEventMP3::TEventMP3(Stream &_stream, TEVENT_MP3_GPIO_t _gpio, int _pin, void (*_handle)(bool)) {
    Player = new DFRobotDFPlayerMini();   
    SerialPlayer = &_stream;
    Handle       = _handle;
@@ -625,51 +511,62 @@ TEventMP3::TEventMP3(Stream &_stream, TEVENT_MP3_GPIO_t _gpio, int _pin,
    PIN          = _pin;
    isLowGpio    = false;
    isHighGpio   = false;
-   
-   init();
+   init(); 
 }
 
 /**
- * Инициализация MP3 плеера
+ * @brief Деструктор. Освобождает ресурсы, выделенные для Player и ColorEvent.
+ */
+TEventMP3::~TEventMP3() {
+    if (Player) {
+        delete Player;
+        Player = nullptr;
+    }
+    if (ColorEvent) {
+        delete ColorEvent;
+        ColorEvent = nullptr;
+    }
+}
+
+/**
+ * @brief Инициализирует DFPlayer Mini.
  */
 void TEventMP3::init() {
     if (!isPlayer) {
-      Player->begin(*SerialPlayer, /*isACK = */true, /*doReset = */true);
-      
+      Player->begin(*SerialPlayer, true, true);
       if (Player->readVolume() >= 0) {
          isPlayer = true;
-         if (isPlayer) Player->setTimeOut(500);
-         if (isPlayer) Player->outputDevice(DFPLAYER_DEVICE_SD); 
+         Player->setTimeOut(500);
+         Player->outputDevice(DFPLAYER_DEVICE_SD); 
 
          if (GPIO != ESM_NONE && PIN >= 0) {
             pinMode(PIN, INPUT);
             if (digitalRead(PIN)) isHighGpio = true;
-            LOG_DEBUGLN("MP3 GPIO %d", (int)digitalRead(PIN));
+            LOG_INFOLN("MP3 GPIO %d state: %d", PIN, (int)digitalRead(PIN));
          }
          LOG_INFOLN("MP3 init success");
       } else {
-         LOG_ERRORLN("MP3 init failed");
+         LOG_ERRORLN("MP3 init FAILED");
       }
     }
 }
 
 /**
- * Установка громкости плеера
- * @param _volume Уровень громкости (0-30)
+ * @brief Устанавливает громкость плеера.
+ * @param _volume Уровень громкости (0-30).
  */
 void TEventMP3::setVolume(int _volume) {
     if (isPlayer) Player->volume(_volume);
 }
 
 /**
- * Установка цвета для индикации MP3
- * @param _color Цвет индикации
- * @param _timer Длительность импульса (0 - постоянное свечение)
+ * @brief Устанавливает цвет и таймер для ColorEvent (мигание светодиодом при проигрывании).
+ * @param _color Цвет светодиода.
+ * @param _timer Длительность импульса мигания. 0 - без мигания.
  */
 void TEventMP3::setColor(uint32_t _color, uint32_t _timer) {
     Color      = _color;
     ColorTimer = _timer;
-    
     if (_timer == 0) {
         ColorEvent->setType(ET_NORMAL);
     } else {
@@ -678,24 +575,22 @@ void TEventMP3::setColor(uint32_t _color, uint32_t _timer) {
 }
 
 /**
- * Запуск воспроизведения MP3
- * @param _dir      Директория (папка)
- * @param _track    Номер трека
- * @param _priority Приоритет воспроизведения
- * @param _delay    Задержка перед воспроизведением
- * @param _timer    Длительность воспроизведения (0 - до конца трека)
- * @param _is_wait  Ожидать окончания трека
- * @param _loop     Зациклить воспроизведение
+ * @brief Запускает воспроизведение трека с учетом приоритетов.
+ * @param _dir Папка на SD-карте.
+ * @param _track Номер трека.
+ * @param _priority Приоритет воспроизведения.
+ * @param _delay Задержка перед началом воспроизведения.
+ * @param _timer Длительность воспроизведения (0 - пока не закончится).
+ * @param _is_wait Ожидать ли окончания трека по таймауту или опросу состояния.
+ * @param _loop Зациклить ли воспроизведение.
  */
-void TEventMP3::start(int _dir, int _track, int _priority, uint32_t _delay, 
-                      uint32_t _timer, bool _is_wait, bool _loop) {   
-    LOG_DEBUGLN("MP3 check %d %d %d", _priority, Priority, State);
-
-    // Проверка приоритета
+void TEventMP3::start(int _dir, int _track, int _priority, uint32_t _delay, uint32_t _timer, bool _is_wait, bool _loop) {
+    LOG_INFOLN("MP3 check: Req Prio=%d, Cur Prio=%d, Cur State=%d", _priority, Priority, State);
+    
     if (_priority < Priority && (State == ES_WAIT_ON || State == ES_ON)) return;
     if (!isPlayer) return;
 
-    startTimer(msOn);
+    msOn       = millis();
     Dir        = _dir;
     Track      = _track;
     DelayOn    = _delay;
@@ -710,22 +605,21 @@ void TEventMP3::start(int _dir, int _track, int _priority, uint32_t _delay,
     } else {
        _stop();
        State = ES_WAIT_ON;
-    }    
-    
-    LOG_INFOLN("MP3 start %02d/%03d.mp3 delay=%lu timer=%lu wait=%d loop=%d", 
-               Dir, Track, DelayOn, TimerOn, (int)waitPlayer, (int)isLoop);
+    }
+    LOG_INFOLN("MP3 start: %02d/%03d.mp3, Delay=%d, Timer=%d, Wait=%d, Loop=%d", Dir, Track, DelayOn, TimerOn, waitPlayer, isLoop);
 }
 
 /**
- * Остановка воспроизведения
+ * @brief Останавливает воспроизведение.
  */
 void TEventMP3::stop() {
    if (State == ES_NONE) return;
+   LOG_INFOLN("MP3 stop");
    _stop();
 }
 
 /**
- * Внутренний метод запуска воспроизведения
+ * @brief Внутренний метод запуска воспроизведения.
  */
 void TEventMP3::_start() {
    init();
@@ -733,80 +627,69 @@ void TEventMP3::_start() {
    if (Handle != NULL) ColorEvent->on();
    isOn = true;
    ms1  = 0;
-   LOG_DEBUGLN("MP3 _start");
+   LOG_DEBUGLN("MP3 _start: Playing %02d/%03d.mp3", Dir, Track);
 }
 
 /**
- * Внутренний метод остановки воспроизведения
+ * @brief Внутренний метод остановки воспроизведения.
  */
 void TEventMP3::_stop() {
-    LOG_INFOLN("MP3 stop %d/%d.mp3", Dir, Track);
-   if (isPlayer) Player->stop();
-   if (Handle != NULL && isOn) ColorEvent->off();
-   State = ES_NONE;   
-   isOn = false;
+    if (isPlayer) Player->stop();
+    if (Handle != NULL && isOn) ColorEvent->off();
+    State = ES_NONE;   
+    isOn = false;
+    LOG_DEBUGLN("MP3 _stop: Stopped %02d/%03d.mp3", Dir, Track);
 }
 
 /**
- * Внутренний метод повторного воспроизведения
- * @param _delay Задержка перед повтором
+ * @brief Внутренний метод повтора воспроизведения с задержкой.
+ * @param _delay Задержка перед повтором, мс.
  */
 void TEventMP3::_replay(uint32_t _delay) {
-    startTimer(msOn);
+    msOn = millis();
     DelayOn = _delay;
-    
-    if (DelayOn == 0) {
-       State = ES_ON;
-       _start();
-    } else {
-       State = ES_WAIT_ON;
-    }    
-    LOG_DEBUGLN("MP3 _replay delay=%lu", _delay);
+    State = ES_WAIT_ON;
+    LOG_DEBUGLN("MP3 _replay: Delay=%d", DelayOn);
 }
 
 /**
- * Определение состояния плеера
- * @return Состояние: 1 - играет, 0 - остановлен, -1 - ошибка
+ * @brief Опрашивает состояние плеера (закончился ли трек).
+ * @return 0 - проигрывание, 1 - остановлен, -1 - ошибка.
  */
 int TEventMP3::state() {
    int _state = -1;
-   int _flag = 0;
-   
    if (GPIO == ESM_NONE || PIN < 0) {
+      Player->readState();
       _state = Player->readState();
    } else if (GPIO == ESM_ENABLE) {
       _state = digitalRead(PIN) ? 0 : 1;
-      _flag = 1;
-   } else {
+   } else { // ESM_AUTO
       if (isLowGpio && isHighGpio) {
          _state = digitalRead(PIN) ? 0 : 1;
-         _flag = 1;
       } else {
+         Player->readState();
          _state = Player->readState();
          if (_state == 1) isLowGpio = true;
          else isHighGpio = true;
       }
    }
-   
-   LOG_DEBUGLN("MP3 state=%d flag=%d low=%d high=%d", 
-               _state, _flag, (int)isLowGpio, (int)isHighGpio);
+   LOG_DEBUGLN("MP3 state=%d, GPIO=%d, Low=%d, High=%d", _state, GPIO, isLowGpio, isHighGpio);
    return _state;
 }
 
 /**
- * Основной цикл обработки MP3 плеера
- * Использует безопасные методы работы с временем для защиты от переполнения millis()
- * 
- * @return Текущее состояние
+ * @brief Основной метод loop для обработки состояний MP3-плеера.
+ * @return Текущий статус события.
  */
 TEVENT_STATUS_t TEventMP3::loop() {
+   uint32_t _ms = millis();
+   
    switch (State) {
        case ES_WAIT_ON:
-          // Безопасная проверка задержки включения
-          if (checkTimer(msOn, DelayOn)) {
+          if (TIME_DIFF_MS(_ms, msOn) > DelayOn) {
              State = ES_ON;
+             msOn  = _ms;
              _start();
-             LOG_DEBUGLN("MP3 WAIT_ON -> ON");
           }
           break;
           
@@ -815,41 +698,23 @@ TEVENT_STATUS_t TEventMP3::loop() {
               _stop();
               break;
           }
-          
-          // Проверка таймера воспроизведения
-          if (TimerOn > 0 && isOn && checkTimer(msOn, TimerOn)) {
-             if (isLoop) {
-                 _replay(2000);
-             } else {
-                 stop();
-             }
-             LOG_DEBUGLN("MP3 timer end");
+          // Остановка по таймеру
+          if (TimerOn > 0 && isOn && (TIME_DIFF_MS(_ms, msOn) > TimerOn)) {
+             msOn = 0;
+             if (isLoop) _replay(DelayOn);
+             else _stop();
           }
-          
-          // Проверка состояния плеера с защитой от переполнения
-          if (isOn && waitPlayer) {
-             // Защита первого запуска и переполнения
-             if (ms1 == 0 || checkTimer(ms1, 2000)) {
-                int _state;
-                if (isPlayer) {
-                   _state = state();
-                } else {
-                   _state = 0;
-                   LOG_ERRORLN("MP3 not initialized");
-                }
-                
-                if (_state <= 0) {
-                   if (isLoop) {
-                       _replay(2000);
-                   } else {
-                       _stop();
-                   }
-                   LOG_DEBUGLN("MP3 playback ended");
-                }
+          // Остановка по окончанию трека
+          if (isOn && waitPlayer && (ms1 == 0 || TIME_DIFF_MS(_ms, ms1) > 2000)) {
+             ms1 = _ms;
+             int _state = state();
+             if (_state <= 0) {
+                if (isLoop) _replay(DelayOn);
+                else _stop();
              }
           }
           break;
    }
-   
+
    return State;
 }

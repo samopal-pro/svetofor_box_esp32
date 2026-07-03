@@ -12,10 +12,6 @@
 
 #include "MyConfig.h"
 
-// ===== SDEBUG Configuration =====
-#define MODULE_NAME "CONFIG"
-#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
-#include "src/Slib/SDEBUG.h"
 
 // ===== Path Constants =====
 #define CONFIG_SELECTOR_PATH    "/httpd/config/config.json"
@@ -126,6 +122,7 @@ bool readJson(const char* file_path, JsonDocument& doc);
 
 // ===== System Functions =====
 void readID();
+String deviceName();
 void listDir(const char* dirname, uint8_t levels);
 
 // ===== JSON Merge Functions =====

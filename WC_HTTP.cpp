@@ -5,6 +5,11 @@
  * Copyright (C) 2024 Alexey Shikharbeev
  * http://samopal.pro
  */
+// ===== MODULE DEBUG CONFIGURATION =====
+#define MODULE_NAME "HTTP"
+#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
+#include "src/Slib/SDEBUG.h"
+#define IS_SET_ACTIVITY
 
 #include "WC_HTTP.h"
 
@@ -27,8 +32,70 @@ String strResponse;
 bool isAuthenticatedFlag = false;
 bool isFirstPlay = true;
 
-// ===== DOCUMENT POOL (reusable JSON document) =====
+// ===== DOCUMENT POOL =====
 JsonDocument jsonDoc;
+
+uint8_t httpActivity     = 1;
+uint8_t httpLoopPriority = 2;
+uint32_t httpLoopTimeout = 100;
+
+// ======================================================================
+// SECTION 0: Основная задача обработки цикла сервера
+// ======================================================================
+bool setHttpActivity(){
+#ifdef IS_SET_ACTIVITY
+
+// Проверяем текущий уровень активности
+
+   uint8_t _activity = httpActivity;
+   uint32_t _idle    = webServer.getIdleTime();
+   if( _idle > 30000 )_activity = 0;
+   else if( _idle > 2000 )_activity = 1;
+   else _activity = 2;
+
+// Проверяем, изменился ли уровень активности
+   if( _activity != httpActivity ){
+      httpActivity = _activity; 
+      switch( _activity ){
+         case 0: 
+            httpLoopPriority = 0;
+            httpLoopTimeout  = 1000;
+            break;
+         case 1: 
+            httpLoopPriority = 2;
+            httpLoopTimeout  = 100;
+            break;
+         case 2: 
+            httpLoopPriority = 4;
+            httpLoopTimeout  = 20;
+            break;           
+      }
+      LOG_DEBUGLN("HTTPD loop Change Activity %d %d %d", (int)uxTaskPriorityGet(NULL), (int)httpLoopPriority, (int)httpLoopTimeout);
+      return true;
+   }
+#endif   
+   return false;
+
+}
+
+
+
+
+/**
+ * Задача работы с MP3
+ * @param pvParameters
+ */
+void taskHttpServer(void *pvParameters) {
+   LOG_INFOLN("Starting loop HTTPS server %d",(int)uxTaskPriorityGet(NULL));
+//   HTTPD_start();
+   while (true) {
+      if( setHttpActivity() ){
+         vTaskPrioritySet(NULL, httpLoopPriority);
+      }
+      HTTPD_loop();      
+      vTaskDelay(httpLoopTimeout);
+   }
+}
 
 // ======================================================================
 // SECTION 1: INITIALIZATION AND MAIN LOOP
@@ -51,7 +118,6 @@ void HTTPD_start() {
 void HTTPD_begin() {
     LOG_INFOLN("Configuring HTTP routes...");
     
-    // Configure routes
     webServer.on("/save", HTTP_POST, handleSave);
     webServer.on("/cmd", HTTP_POST, handleCommand);
     webServer.on("/config", HTTP_GET, handleConfigSelector);
@@ -62,13 +128,10 @@ void HTTPD_begin() {
     webServer.on("/auth", HTTP_POST, handleAuth);
     webServer.on("/update", HTTP_POST, []() {}, handleFirmwareUpload);
     
-    // File system API (external function)
     API_fsBegin();
     
-    // Catch-all handler
     webServer.onNotFound(handleFile);
     
-    // Track specific headers
     const char* headerKeys[] = {"User-Agent", "Cookie"};
     webServer.collectHeaders(headerKeys, 2);
     
@@ -100,18 +163,10 @@ void httpSetStatus(const String& s) {
     LOG_INFOLN("Status set: %s", s.c_str());
 }
 
-void HTTP_setResponse(const String& msg, const String& cmd) {
-    if (msg.isEmpty() && cmd.isEmpty()) {
-        strResponse.clear();
-        return;
-    }
-    
-    jsonDoc.clear();
-    jsonDoc["msg"] = msg;
-    jsonDoc["cmd"] = cmd;
-    serializeJson(jsonDoc, strResponse);
-    
-    LOG_DEBUGLN("Response prepared: %s", strResponse.c_str());
+void HTTP_sendResponse(const String& json) {
+    if (json.isEmpty() || json == "{}") return;
+    strResponse = json;
+    LOG_DEBUGLN("Response queued: %s", json.c_str());
 }
 
 void handleResponse() {
@@ -120,7 +175,7 @@ void handleResponse() {
         return;
     }
     
-    LOG_INFOLN("Sending response: %s", strResponse.c_str());
+    LOG_INFOLN("Sending: %s", strResponse.c_str());
     webServer.send(200, CONTENT_TYPE_JSON, strResponse);
     strResponse.clear();
 }
@@ -143,7 +198,6 @@ void handleAuth() {
     
     const String& cmd = webServer.arg("cmd");
     
-    // Handle logout
     if (cmd == "LOGOUT") {
         LOG_INFOLN("User logged out");
         webServer.sendHeader("Set-Cookie", COOKIE_CLEAR);
@@ -154,10 +208,9 @@ void handleAuth() {
     printArg();
     const String& password = webServer.arg("password");
     
-    // Check against configured passwords
-    const String& pass1 = config["config2"]["ESP_PASS1"].as<String>();
-    const String& pass2 = config["config2"]["ESP_PASS2"].as<String>();
-    const String& pass3 = config["config2"]["ESP_PASS3"].as<String>();
+    String pass1 = config["config2"]["ESP_PASS1"].as<String>();
+    String pass2 = config["config2"]["ESP_PASS2"].as<String>();
+    String pass3 = config["config2"]["ESP_PASS3"].as<String>();
     
     if (password == pass1 || password == pass2 || password == pass3) {
         isAuthenticatedFlag = true;
@@ -181,7 +234,6 @@ bool needAuth(const String& contentType) {
 // ======================================================================
 
 String getContentType(const String& path) {
-    // Ordered by most likely to be requested
     if (path.endsWith(".html") || path.endsWith(".htm")) return CONTENT_TYPE_HTML;
     if (path.endsWith(".json")) return CONTENT_TYPE_JSON;
     if (path.endsWith(".js"))   return "application/javascript";
@@ -211,13 +263,12 @@ void handleFile() {
 }
 
 void HTTP_file(const String& uri) {
-    const String path = String(HTTPD_PREFIX) + uri;
-    const String contentType = getContentType(path);
+    String path = String(HTTPD_PREFIX) + uri;
+    String contentType = getContentType(path);
     
     LOG_DEBUGLN("Requested file: %s [%s]", path.c_str(), contentType.c_str());
     
-    // Authentication check (skip for login page)
-    const bool isLoginPage = (uri == "/login.html" || uri == "/auth");
+    bool isLoginPage = (uri == "/login.html" || uri == "/auth");
     if (!isLoginPage && needAuth(contentType) && !isAuthenticated()) {
         LOG_INFOLN("Redirecting to login page");
         webServer.sendHeader("Location", "/login.html");
@@ -225,7 +276,6 @@ void HTTP_file(const String& uri) {
         return;
     }
     
-    // Open and serve file
     File file = LittleFS.open(path, "r");
     if (!file || file.isDirectory()) {
         HTTP_notfound(path);
@@ -252,7 +302,7 @@ void HTTP_notfound(const String& path) {
 }
 
 bool HTTP_redirect() {
-    const String& serverLoc = webServer.client().localIP().toString();
+    String serverLoc = webServer.client().localIP().toString();
     
     if (serverLoc != webServer.hostHeader()) {
         LOG_INFOLN("Redirect: %s -> %s", webServer.hostHeader().c_str(), serverLoc.c_str());
@@ -269,17 +319,16 @@ bool HTTP_redirect() {
 // ======================================================================
 
 void handleConfigSelector() {
-    const String& file = config_selector[activeConfig]["file"].as<String>();
-    LOG_INFOLN("Serving config file: %s", file.c_str());
+    String configFile = config_selector[activeConfig]["file"].as<String>();
+    LOG_INFOLN("Serving config file: %s", configFile.c_str());
     
-    // Verify file exists
-    const String path = String(HTTPD_PREFIX) + file;
-    if (!LittleFS.exists(path)) {
+    String fullPath = String(HTTPD_PREFIX) + configFile;
+    if (!LittleFS.exists(fullPath)) {
         LOG_ERRORLN("Config file not found, resetting to default");
         configSetDefault();
     }
     
-    HTTP_file(file);
+    HTTP_file(configFile);
 }
 
 void handleSave() {
@@ -306,21 +355,33 @@ void saveConfigData() {
         return;
     }
     
-    const String& name = webServer.arg("name");
-    const String& data = webServer.arg("data");
+    const String& sectionName = webServer.arg("name");
+    const String& jsonData = webServer.arg("data");
     
-    const String& file = String(HTTPD_PREFIX) + config_selector[activeConfig]["file"].as<String>();
-    LOG_INFOLN("Saving to: %s", file.c_str());
+    String configFileName = config_selector[activeConfig]["file"].as<String>();
+    String filePath = String(HTTPD_PREFIX) + configFileName;
     
-    // Parse incoming data
+    LOG_INFOLN("Saving section '%s' to: %s", sectionName.c_str(), filePath.c_str());
+    
     JsonDocument docConfig;
-    DeserializationError err = deserializeJson(docConfig, data);
+    DeserializationError err = deserializeJson(docConfig, jsonData);
     if (err) {
         LOG_ERRORLN("JSON parse error: %s", err.c_str());
         return;
     }
     
-    copyJson(docConfig, config);
+    if (docConfig.containsKey(sectionName)) {
+        JsonObject sourceSection = docConfig[sectionName].as<JsonObject>();
+        JsonObject targetSection = config[sectionName].as<JsonObject>();
+        
+        for (JsonPair kv : sourceSection) {
+            targetSection[kv.key()] = kv.value();
+            LOG_DEBUGLN("Updated %s.%s", sectionName.c_str(), kv.key().c_str());
+        }
+    } else {
+        copyJson(docConfig, config);
+    }
+    
     configWrite();
 }
 
@@ -335,13 +396,10 @@ void handleCommand() {
     int httpCode = 200;
     const String& cmd = webServer.arg("cmd");
     String output;
-    output.reserve(512);  // Pre-allocate for typical response size
+    output.reserve(512);
     
     if (cmd == "wifi_list") {
         output = WiFi_ScanNetwork();
-    }
-    else if (cmd == "ap_name") {
-        output = "{\"value\":\"" + deviceName() + "\"}";
     }
     else if (cmd == "calibrate") {
         systemMP3((char*)"89", 85, PRIORITY_MP3_HIGH);
@@ -373,7 +431,8 @@ void handleCommand() {
             config_selector["active"] = configName;
             if (writeJson(CONFIG_SELECTOR_PATH, config_selector)) {
                 setActiveConfig();
-                systemMP3((char*)"89", config_selector[activeConfig]["mp3_num"].as<int>(), PRIORITY_MP3_HIGH);
+                int mp3num = config_selector[activeConfig]["mp3_num"].as<int>();
+                systemMP3((char*)"89", mp3num, PRIORITY_MP3_HIGH);
                 LOG_INFOLN("Active config changed to: %s", configName.c_str());
             }
             configRead();
@@ -508,13 +567,11 @@ String WiFi_ScanNetwork() {
         return "[]";
     }
     
-    // Create index array for sorting
     int* indices = new int[n];
     for (int i = 0; i < n; i++) {
         indices[i] = i;
     }
     
-    // Sort by RSSI (descending)
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
             if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
@@ -528,7 +585,7 @@ String WiFi_ScanNetwork() {
     
     for (int i = 0; i < n; i++) {
         JsonObject obj = array.add<JsonObject>();
-        const String& ssid = WiFi.SSID(indices[i]);
+        String ssid = WiFi.SSID(indices[i]);
         obj["value"] = ssid;
         obj["name"] = ssid + "[" + String(WiFi.RSSI(indices[i])) + "dB]";
     }
@@ -542,28 +599,13 @@ String WiFi_ScanNetwork() {
     return result;
 }
 
-String deviceName() {
-    String name;
-    name.reserve(64);
-    
-    if (strlen(serNo) > 0) {
-        name += serNo;
-    } else {
-        name += DEVICE_NAME_YEAR;
-    }
-    name += DEVICE_NAM_SUFFIX;
-    
-    LOG_DEBUGLN("Device name: %s", name.c_str());
-    return name;
-}
-
 void HTTP_playMP3() {
     if (!webServer.hasArg("name")) {
         LOG_ERRORLN("Missing 'name' argument for MP3 playback");
         return;
     }
     
-    const int num = webServer.arg("name").toInt();
+    int num = webServer.arg("name").toInt();
     const String& arg1 = webServer.hasArg("arg1") ? webServer.arg("arg1") : "";
     
     int dir = (num < 20) ? MP3_BASE_DIR : MP3_ADD_DIR;
@@ -578,14 +620,13 @@ void HTTP_playMP3() {
     if (arg1.isEmpty()) {
         playMP3(dir, num, priority);
     } else {
-        // Приведение const char* к char* для совместимости с systemMP3
         char* arg1_ptr = const_cast<char*>(arg1.c_str());
         systemMP3(arg1_ptr, num, priority);
     }
 }
 
 void printArg() {
-    const int count = webServer.args();
+    int count = webServer.args();
     for (int i = 0; i < count; i++) {
         LOG_DEBUGLN("Arg[%d]: %s = %s", 
                    i, 

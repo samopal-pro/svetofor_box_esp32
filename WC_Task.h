@@ -7,6 +7,7 @@
 #include "WC_HTTP.h"
 #include "WC_Event.h"
 #include "WC_Net.h"
+#include "WC_Lora.h"
 //#include "src/Slib/SButton.h"
 #include "src/Slib/SBTN.h"
 //#include <WiFi.h>
@@ -46,6 +47,7 @@ void taskSensors(void *pvParameters);
 void taskButton(void *pvParameters);
 void taskMP3(void *pvParameters);
 void taskRGB(void *pvParameters);
+void taskDebug(void *pvParameters);
 void setVolumeMP3();
 
 //void baseMP3(int)

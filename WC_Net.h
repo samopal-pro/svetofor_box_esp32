@@ -1,71 +1,38 @@
 #pragma once
+
 #include "MyConfig.h"
-
-#ifdef IS_LORA
-#include <SPI.h>
-/*
-#if defined(RADIOLIB_OPT)
-// Исключаем лишние чипы и их клоны
-#define RADIOLIB_EXCLUDE_CC1101 1
-#define RADIOLIB_EXCLUDE_LLCC68 1
-#define RADIOLIB_EXCLUDE_NRF24 1
-#define RADIOLIB_EXCLUDE_RF69 1
-#define RADIOLIB_EXCLUDE_RFM69 1
-#define RADIOLIB_EXCLUDE_SI443X 1
-#define RADIOLIB_EXCLUDE_RFM2X 1
-#define RADIOLIB_EXCLUDE_SX1231 1
-#define RADIOLIB_EXCLUDE_SX1233 1
-#define RADIOLIB_EXCLUDE_SX127X 1
-#define RADIOLIB_EXCLUDE_SX128X 1
-
-// Исключаем неиспользуемые протоколы
-#define RADIOLIB_EXCLUDE_LORAWAN 1      // Поставьте 0, если LoRaWAN все же нужен
-#define RADIOLIB_EXCLUDE_AFSK 1
-#define RADIOLIB_EXCLUDE_AX25 1
-#define RADIOLIB_EXCLUDE_BELL 1         // <--- ИСПРАВЛЕНО ЗДЕСЬ
-#define RADIOLIB_EXCLUDE_APRS 1
-#define RADIOLIB_EXCLUDE_HELLSCHREIBER 1
-#define RADIOLIB_EXCLUDE_MORSE 1
-#define RADIOLIB_EXCLUDE_RTTY 1
-#define RADIOLIB_EXCLUDE_SSTV 1
-#define RADIOLIB_EXCLUDE_PAGER 1
-#define RADIOLIB_EXCLUDE_DIRECT_RECEIVE 1
-#indif
-*/
-#include <RadioLib.h>
-#include "src/MyLoRa/MyLoRaBase.h"
-#endif
-
-//#include <WiFi.h>
-//#include <HTTPClient.h>
 #include "src/Slib/SHTTPClient.h"
-
 #include "WC_Config.h"
 #include "WC_Task.h"
 
+// ============================================================
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ МОДУЛЯ NET
+// ============================================================
 
-extern char SensorID[];
-extern bool isAP, isSTA;
-extern bool isLora;
+// Флаги состояния WiFi
+extern bool isAP;            // Активен режим точки доступа
+extern bool isSTA;           // Активен режим клиента (подключение к роутеру)
+extern bool isSendNet;       // Флаг необходимости сброса таймеров при первом подключении
+extern bool isWiFiConnected; // Текущее состояние подключения к WiFi сети
 
-void taskLora(void *pvParameters);
-void initLora();
-void readLora();
-bool sendLora();
-bool sendLoraAttr();
-void setLoraReceive(bool _flag);
-bool waitLoraRead(uint32_t _tm);
+// ============================================================
+// ПРОТОТИПЫ ФУНКЦИЙ
+// ============================================================
 
-void IRAM_ATTR onLoraIrq();
-void taskNet(void *pvParameters);
-void handleEventWiFi(arduino_event_id_t event, arduino_event_info_t info);
-bool sendCrmMoscowParam();
-bool sendHttpParam();
-void sendHttpParamOne(String &_host);
+// Задачи FreeRTOS
+void taskWiFiManager(void *pvParameters);  // Задача управления WiFi подключением
+void taskHttpSender(void *pvParameters);   // Задача отправки HTTP запросов на серверы
+
+// Получение текущего статуса датчика
 int getStatus();
 
-bool sendParamTB();
-bool sendAttributeTB();
-bool authTB(const char *_key, const char *_secret);
+// Отправка данных на внешние серверы
+bool sendCrmMoscowParam();               // Отправка в CRM Москва
+bool sendHttpParam();                    // Отправка на HTTP шлюзы (список серверов)
+bool sendHttpParamOne(String &host);     // Отправка на один конкретный HTTP шлюз
+bool sendParamTB();                      // Отправка телеметрии в ThingsBoard
+bool sendAttributeTB();                  // Отправка атрибутов устройства в ThingsBoard
+bool authTB(const char *key, const char *secret);  // Авторизация устройства в ThingsBoard
 
-uint16_t KeyGen(char *str);
+// Вспомогательные функции
+uint16_t KeyGen(char *str);  // Генерация контрольной суммы для запросов

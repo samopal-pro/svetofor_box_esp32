@@ -89,12 +89,51 @@ void tasksStart() {
    xTaskCreateUniversal(taskEvents, "events", 4096, NULL, 3, NULL, CORE);
    xTaskCreateUniversal(taskRGB, "rgb", 2048, NULL, 2, NULL, CORE);
    xTaskCreateUniversal(taskMP3, "mp3", 2048, NULL, 1, NULL, CORE);
-   xTaskCreateUniversal(taskNet, "net", 4096, NULL, 3, NULL, CORE);
+
+    // Создание задачи управления WiFi
+   xTaskCreateUniversal(
+        taskWiFiManager,    // Функция задачи
+        "wifi_mgr",         // Имя задачи
+        4096,               // Размер стека
+        NULL,               // Параметры
+        1,                  // Приоритет
+        NULL,               // Handle задачи
+        0                   // Ядро 0 (где работает WiFi стек)
+    );
+    
+    // Создание задачи отправки HTTP
+   xTaskCreateUniversal(
+        taskHttpSender,     // Функция задачи
+        "http_sender",      // Имя задачи
+        8192,               // Размер стека (больше для JSON операций)
+        NULL,               // Параметры
+        2,                  // Приоритет (выше чем WiFi менеджер)
+        NULL,               // Handle задачи
+        1                   // Ядро 1 (свободное ядро)
+    );
+
+    // Создание задачи отправки HTTP
+   xTaskCreateUniversal(
+        taskHttpServer,     // Функция задачи
+        "http_server",      // Имя задачи
+        4096,               // Размер стека (больше для JSON операций)
+        NULL,               // Параметры
+        3,                  // Приоритет (выше чем WiFi менеджер)
+        NULL,               // Handle задачи
+        1                   // Ядро 1 (свободное ядро)
+    );
+
+    
+
+//   xTaskCreateUniversal(taskNet, "net", 4096, NULL, 3, NULL, CORE);
    vTaskDelay(500);
    xTaskCreateUniversal(taskSensors, "sensors", 10000, NULL, 4, NULL, CORE);
    vTaskDelay(500);
    xTaskCreateUniversal(taskButton, "btn", 4096, NULL, 4, NULL,CORE);
    vTaskDelay(500);
+   xTaskCreateUniversal(taskDebug, "debug", 2048, NULL, 1, NULL,CORE);
+
+   
 //  vTaskDelay(500);
 //   xTaskCreateUniversal(taskLora, "lora", 10000, NULL, 2, NULL, CORE);
 }
@@ -493,11 +532,23 @@ void handleCalibrate(bool _flag){
           bool ret = false;
           if(calibrError < calibrCount){
             systemMP3("97",93,PRIORITY_MP3_MAXIMAL);
-            HTTP_setResponse("Датчик успешно откалибровался","reload5");
+
+            HTTP_sendResponse(WebResponse::combine({
+               WebResponse::msg("Датчик успешно откалибровался", "success", 5000),
+               WebResponse::reload(5000)
+            }));
+//
+//
+//            HTTP_setResponse("Датчик успешно откалибровался","reload5");
           }
           else {
             systemMP3("97",94,PRIORITY_MP3_MAXIMAL);
-            HTTP_setResponse("Датчик плохо видит расстояние, но откалибровался","reload5");
+            HTTP_sendResponse(WebResponse::combine({
+               WebResponse::msg("Датчик плохо видит расстояние, но откалибровался", "info", 5000),
+               WebResponse::reload(5000)
+            }));
+
+//            HTTP_setResponse("Датчик плохо видит расстояние, но откалибровался","reload5");
           }
           EventRGB1->set(COLOR_SAVE,COLOR_SAVE);
           EventRGB2->set(COLOR_SAVE,COLOR_SAVE);
@@ -513,7 +564,11 @@ void handleCalibrate(bool _flag){
      }
      else {
           systemMP3("97",95,PRIORITY_MP3_MAXIMAL);
-          HTTP_setResponse("Датчик не видит расстояние и не откалибровался");
+          HTTP_sendResponse(WebResponse::combine({
+             WebResponse::msg("Датчик не видит расстояние и не откалибровался", "error",5000)
+          }));
+          
+//          HTTP_setResponse("Датчик не видит расстояние и не откалибровался");
           EventRGB1->set(COLOR_NAN,COLOR_NAN);
           EventRGB2->set(COLOR_NAN,COLOR_NAN);
      }
@@ -708,6 +763,21 @@ void printStat(char *msg){
 }
 
 
+void taskDebug(void *pvParameters){
+#if defined(DEBUG_SERIAL)
+   Serial.println(F("!!! Debug task start"));
+#endif
+   int n = 0;
+   while(true){
+//      String s = "KEY"+String(n++);
+//      HTTP_sendResponse(WebResponse::combine({
+//         WebResponse::config("config2", "TB_TOKEN", s),
+//         WebResponse::msg("Изменение токена", "info", 3000)
+//      }));
+      vTaskDelay(10000);   
+   }
+}
+
 /*
 * Задача работы с кнопкой (герконом)
 */
@@ -819,7 +889,7 @@ void taskButton(void *pvParameters){
              is_early = false;   
              break;   
       }
-      HTTPD_loop();
+//     HTTPD_loop();
       vTaskDelay(200);
        
    }

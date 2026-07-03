@@ -1,4 +1,11 @@
+// ===== SDEBUG Configuration =====
+#define MODULE_NAME "CONFIG"
+#define MODULE_DEBUG_LEVEL DEBUG_INFO
+#include "src/Slib/SDEBUG.h"
+
+
 #include "WC_Config.h"
+
 
 // ===== Global Variables =====
 char strID[MAC_STR_LEN] = {0};
@@ -111,7 +118,19 @@ void configRead() {
         config.clear();
         copyJson(config_default, config);
     }
-}
+
+// Проверяем, существует ли параметр ESP_NAME в конфигурации
+if (config["config2"]["ESP_NAME"].isNull() || 
+    config["config2"]["ESP_NAME"].as<String>().length() == 0) {    
+  
+    // Устанавливаем значение в конфигурации
+    config["config2"]["ESP_NAME"] = deviceName();
+    
+    // Сохраняем изменения
+    LOG_INFOLN("ESP_NAME was empty");
+    configWrite();
+    
+}}
 
 /**
  * @brief Запись конфигурации в файл
@@ -426,4 +445,19 @@ uint32_t String2RGB(JsonVariantConst value) {
     
     LOG_DEBUGLN("Color converted: %s -> 0x%06X", value.as<const char*>(), rgb);
     return rgb;
+}
+
+String deviceName() {
+    String name;
+    name.reserve(64);
+    
+    if (strlen(serNo) > 0) {
+        name += serNo;
+    } else {
+        name += DEVICE_NAME_YEAR;
+    }
+    name += DEVICE_NAM_SUFFIX;
+    
+    LOG_DEBUGLN("Device name: %s", name.c_str());
+    return name;
 }
