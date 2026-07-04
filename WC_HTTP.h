@@ -19,7 +19,7 @@
 #include "WC_Task.h"
 #include "MyConfig.h"
 
-#include "src/WebServer/WebServer.h"
+#include "src/WebServerLite/WebServerLite.h"
 
 #include "src/Slib/SDEBUG.h"
 

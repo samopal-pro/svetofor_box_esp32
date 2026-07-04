@@ -224,7 +224,7 @@ void taskSensors(void *pvParameters) {
    pinMode(PIN_OUT1,OUTPUT);
    setRelay1(statRelay1); 
    pinMode(PIN_OUT2,OUTPUT);
-   setRelay1(statRelay2); 
+   setRelay2(statRelay2); 
 //   checkPlayMP3("100",100);
 
 // Стартовое приветсвие

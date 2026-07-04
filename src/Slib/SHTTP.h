@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../Webserver/WebServer.h"
+#include "../WebServerLite/WebServerLite.h"
 
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 //#include <Update.h>
 
-extern WebServer webServer;
+extern WebServerLite webServer;
 
 void handle_fsList();
 void handle_fsFile();

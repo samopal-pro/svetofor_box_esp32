@@ -20,17 +20,16 @@
   Modified 8 May 2015 by Hristo Gochkov (proper post and file upload handling)
   
   Changes (samopal.pro):
-  - Added conditional compilation for RAW processing (WEBSERVER_INCLUDE_RAW)
-  - Added conditional compilation for chunked encoding (WEBSERVER_INCLUDE_CHUNKED)
-  - When features are disabled via WEBSERVER_NO_* defines, related code is excluded
+  - Added "lite" suffix to avoid conflicts with stock library
+  - Removed all conditional features (AUTH, CORS, ETAG, CHUNKED, SSE, RAW, MIDDLEWARE, REGEX)
+  - Removed log_v debug output
 */
 
-#include "WebServerConfig.h"
 #include <Arduino.h>
 #include <esp32-hal-log.h>
 #include "NetworkServer.h"
 #include "NetworkClient.h"
-#include "WebServer.h"
+#include "WebServerLite.h"
 #include "detail/mimetable.h"
 
 #ifndef WEBSERVER_MAX_POST_ARGS
@@ -80,7 +79,7 @@ static char *readBytesWithTimeout(NetworkClient &client, size_t maxLength, size_
   return buf;
 }
 
-bool WebServer::_parseRequest(NetworkClient &client) {
+bool WebServerLite::_parseRequest(NetworkClient &client) {
   // Read the first line of HTTP request
   String req = client.readStringUntil('\r');
   client.readStringUntil('\n');
@@ -90,7 +89,7 @@ bool WebServer::_parseRequest(NetworkClient &client) {
     collectAllHeaders();
   } else {
     // clear previous headers
-    for (RequestArgument *header = _currentHeaders; header; header = header->next) {
+    for (RequestArgumentLite *header = _currentHeaders; header; header = header->next) {
       header->value = String();
     }
   }
@@ -100,7 +99,6 @@ bool WebServer::_parseRequest(NetworkClient &client) {
   int addr_start = req.indexOf(' ');
   int addr_end = req.indexOf(' ', addr_start + 1);
   if (addr_start == -1 || addr_end == -1) {
-    log_e("Invalid request: %s", req.c_str());
     return false;
   }
 
@@ -117,24 +115,21 @@ bool WebServer::_parseRequest(NetworkClient &client) {
   _currentUri = url;
   _clientContentLength = 0;  // not known yet, or invalid
 
-  HTTPMethod method = HTTP_ANY;
+  HTTPMethodLite method = HTTP_ANY_LITE;
   size_t num_methods = sizeof(_http_method_str) / sizeof(const char *);
   for (size_t i = 0; i < num_methods; i++) {
     if (methodStr == _http_method_str[i]) {
-      method = (HTTPMethod)i;
+      method = (HTTPMethodLite)i;
       break;
     }
   }
-  if (method == HTTP_ANY) {
-    log_e("Unknown HTTP Method: %s", methodStr.c_str());
+  if (method == HTTP_ANY_LITE) {
     return false;
   }
   _currentMethod = method;
 
-  log_v("method: %s url: %s search: %s", methodStr.c_str(), url.c_str(), searchStr.c_str());
-
   //attach handler
-  RequestHandler *handler;
+  RequestHandlerLite *handler;
   for (handler = _firstHandler; handler; handler = handler->next()) {
     if (handler->canHandle(*this, _currentMethod, _currentUri)) {
       break;
@@ -177,7 +172,6 @@ bool WebServer::_parseRequest(NetworkClient &client) {
           boundaryStr = headerValue.substring(headerValue.indexOf('=') + 1);
           boundaryStr.replace("\"", "");
           if (boundaryStr.length() > 70) {  // RFC 2046: max boundary length is 70
-            log_e("Invalid boundary length: %s", boundaryStr.c_str());
             return false;
           }
           isForm = true;
@@ -189,41 +183,7 @@ bool WebServer::_parseRequest(NetworkClient &client) {
       }
     }
 
-    // Check for raw processing capability
-    #ifdef WEBSERVER_INCLUDE_RAW
-      bool canProcessRaw = _currentHandler && _currentHandler->canRaw(*this, _currentUri);
-    #else
-      bool canProcessRaw = false;
-    #endif
-
-    if (!isForm && canProcessRaw) {
-      // ===== RAW PROCESSING (conditional) =====
-      #ifdef WEBSERVER_INCLUDE_RAW
-        log_v("Parse raw");
-        _currentRaw.reset(new HTTPRaw());
-        _currentRaw->status = RAW_START;
-        _currentRaw->totalSize = 0;
-        _currentRaw->currentSize = 0;
-        log_v("Start Raw");
-        _currentHandler->raw(*this, _currentUri, *_currentRaw);
-        _currentRaw->status = RAW_WRITE;
-
-        while (_currentRaw->totalSize < (size_t)_clientContentLength) {
-          size_t read_len = std::min((size_t)_clientContentLength - _currentRaw->totalSize, (size_t)HTTP_RAW_BUFLEN);
-          _currentRaw->currentSize = client.readBytes(_currentRaw->buf, read_len);
-          _currentRaw->totalSize += _currentRaw->currentSize;
-          if (_currentRaw->currentSize == 0) {
-            _currentRaw->status = RAW_ABORTED;
-            _currentHandler->raw(*this, _currentUri, *_currentRaw);
-            return false;
-          }
-          _currentHandler->raw(*this, _currentUri, *_currentRaw);
-        }
-        _currentRaw->status = RAW_END;
-        _currentHandler->raw(*this, _currentUri, *_currentRaw);
-        log_v("Finish Raw");
-      #endif
-    } else if (!isForm) {
+    if (!isForm) {
       size_t plainLength;
       char *plainBuf = readBytesWithTimeout(client, _clientContentLength, plainLength, HTTP_MAX_POST_WAIT);
       if (plainLength < (size_t)_clientContentLength) {
@@ -241,12 +201,11 @@ bool WebServer::_parseRequest(NetworkClient &client) {
         _parseArguments(searchStr);
         if (!isEncoded) {
           //plain post json or other data
-          RequestArgument &arg = _currentArgs[_currentArgCount++];
+          RequestArgumentLite &arg = _currentArgs[_currentArgCount++];
           arg.key = F("plain");
           arg.value = String(plainBuf);
         }
 
-        log_v("Plain: %s", plainBuf);
         free(plainBuf);
       } else {
         // No content - but we can still have arguments in the URL.
@@ -285,48 +244,40 @@ bool WebServer::_parseRequest(NetworkClient &client) {
   }
   client.clear();
 
-  log_v("Request: %s", url.c_str());
-  log_v(" Arguments: %s", searchStr.c_str());
-
   return true;
 }
 
-bool WebServer::_collectHeader(const char *headerName, const char *headerValue) {
-  RequestArgument *last = nullptr;
-  for (RequestArgument *header = _currentHeaders; header; header = header->next) {
+bool WebServerLite::_collectHeader(const char *headerName, const char *headerValue) {
+  RequestArgumentLite *last = nullptr;
+  for (RequestArgumentLite *header = _currentHeaders; header; header = header->next) {
     if (header->next == nullptr) {
       last = header;
     }
     if (header->key.equalsIgnoreCase(headerName)) {
       header->value = headerValue;
-      log_v("header collected: %s: %s", headerName, headerValue);
       return true;
     }
   }
   assert(last);
   if (_collectAllHeaders) {
-    last->next = new RequestArgument();
+    last->next = new RequestArgumentLite();
     last->next->key = headerName;
     last->next->value = headerValue;
     _headerKeysCount++;
-    log_v("header collected: %s: %s", headerName, headerValue);
     return true;
   }
-
-  log_v("header skipped: %s: %s", headerName, headerValue);
 
   return false;
 }
 
-void WebServer::_parseArguments(const String &data) {
-  log_v("args: %s", data.c_str());
+void WebServerLite::_parseArguments(const String &data) {
   if (_currentArgs) {
     delete[] _currentArgs;
   }
   _currentArgs = 0;
   if (data.length() == 0) {
     _currentArgCount = 0;
-    _currentArgs = new RequestArgument[1];
+    _currentArgs = new RequestArgumentLite[1];
     return;
   }
   _currentArgCount = 1;
@@ -339,27 +290,23 @@ void WebServer::_parseArguments(const String &data) {
     ++i;
     ++_currentArgCount;
   }
-  log_v("args count: %d", _currentArgCount);
 
-  _currentArgs = new RequestArgument[_currentArgCount + 1];
+  _currentArgs = new RequestArgumentLite[_currentArgCount + 1];
   int pos = 0;
   int iarg;
   for (iarg = 0; iarg < _currentArgCount;) {
     int equal_sign_index = data.indexOf('=', pos);
     int next_arg_index = data.indexOf('&', pos);
-    log_v("pos %d =@%d &@%d", pos, equal_sign_index, next_arg_index);
     if ((equal_sign_index == -1) || ((equal_sign_index > next_arg_index) && (next_arg_index != -1))) {
-      log_e("arg missing value: %d", iarg);
       if (next_arg_index == -1) {
         break;
       }
       pos = next_arg_index + 1;
       continue;
     }
-    RequestArgument &arg = _currentArgs[iarg];
+    RequestArgumentLite &arg = _currentArgs[iarg];
     arg.key = urlDecode(data.substring(pos, equal_sign_index));
     arg.value = urlDecode(data.substring(equal_sign_index + 1, next_arg_index));
-    log_v("arg %d key: %s value: %s", iarg, arg.key.c_str(), arg.value.c_str());
     ++iarg;
     if (next_arg_index == -1) {
       break;
@@ -367,10 +314,9 @@ void WebServer::_parseArguments(const String &data) {
     pos = next_arg_index + 1;
   }
   _currentArgCount = iarg;
-  log_v("args count: %d", _currentArgCount);
 }
 
-void WebServer::_uploadWriteByte(uint8_t b) {
+void WebServerLite::_uploadWriteByte(uint8_t b) {
   if (_currentUpload->currentSize == HTTP_UPLOAD_BUFLEN) {
     if (_currentHandler && _currentHandler->canUpload(*this, _currentUri)) {
       _currentHandler->upload(*this, _currentUri, *_currentUpload);
@@ -381,7 +327,7 @@ void WebServer::_uploadWriteByte(uint8_t b) {
   _currentUpload->buf[_currentUpload->currentSize++] = b;
 }
 
-int WebServer::_uploadReadByte(NetworkClient &client) {
+int WebServerLite::_uploadReadByte(NetworkClient &client) {
   int res = client.read();
 
   if (res < 0) {
@@ -403,17 +349,6 @@ int WebServer::_uploadReadByte(NetworkClient &client) {
       if (res >= 0) {
         return res;  // exit on a valid read
       }
-      // NOTE: it is possible to get here and have all of the following
-      //       assertions hold true
-      //
-      //       -- client.available() > 0
-      //       -- client.connected == true
-      //       -- res == -1
-      //
-      //       a simple retry strategy overcomes this which is to say the
-      //       assertion is not permanent, but the reason that this works
-      //       is elusive, and possibly indicative of a more subtle underlying
-      //       issue
 
       timedOut = (millis() - startMillis) >= timeoutIntervalMillis;
       if (timedOut) {
@@ -425,9 +360,8 @@ int WebServer::_uploadReadByte(NetworkClient &client) {
   return res;
 }
 
-bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32_t len) {
+bool WebServerLite::_parseForm(NetworkClient &client, const String &boundary, uint32_t len) {
   (void)len;
-  log_v("Parse Form: Boundary: %s Length: %" PRIu32, boundary.c_str(), len);
   String line;
   int retry = 0;
   do {
@@ -441,7 +375,7 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
     if (_postArgs) {
       delete[] _postArgs;
     }
-    _postArgs = new RequestArgument[WEBSERVER_MAX_POST_ARGS];
+    _postArgs = new RequestArgumentLite[WEBSERVER_MAX_POST_ARGS];
     _postArgsLen = 0;
     while (1) {
       String argName;
@@ -463,13 +397,11 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
             argFilename = argName.substring(nameStart + 2, argName.length() - 1);
             argName = argName.substring(0, argName.indexOf('"'));
             argIsFile = true;
-            log_v("PostArg FileName: %s", argFilename.c_str());
             //use GET to set the filename if uploading using blob
             if (argFilename == F("blob") && hasArg(FPSTR(filename))) {
               argFilename = arg(FPSTR(filename));
             }
           }
-          log_v("PostArg Name: %s", argName.c_str());
           using namespace mime;
           argType = FPSTR(mimeTable[txt].mimeType);
           line = client.readStringUntil('\r');
@@ -482,7 +414,6 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
             line = client.readStringUntil('\r');
             client.readStringUntil('\n');
           }
-          log_v("PostArg Type: %s", argType.c_str());
           if (!argIsFile) {
             while (1) {
               line = client.readStringUntil('\r');
@@ -495,28 +426,24 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
               }
               argValue += line;
             }
-            log_v("PostArg Value: %s", argValue.c_str());
 
-            RequestArgument &arg = _postArgs[_postArgsLen++];
+            RequestArgumentLite &arg = _postArgs[_postArgsLen++];
             arg.key = argName;
             arg.value = argValue;
 
             if (line == ("--" + boundary + "--")) {
-              log_v("Done Parsing POST");
               break;
             } else if (_postArgsLen >= WEBSERVER_MAX_POST_ARGS) {
-              log_e("Too many PostArgs (max: %u) in request.", WEBSERVER_MAX_POST_ARGS);
               return false;
             }
           } else {
-            _currentUpload.reset(new HTTPUpload());
+            _currentUpload.reset(new HTTPUploadLite());
             _currentUpload->status = UPLOAD_FILE_START;
             _currentUpload->name = argName;
             _currentUpload->filename = argFilename;
             _currentUpload->type = argType;
             _currentUpload->totalSize = 0;
             _currentUpload->currentSize = 0;
-            log_v("Start File: %s Type: %s", _currentUpload->filename.c_str(), _currentUpload->type.c_str());
             if (_currentHandler && _currentHandler->canUpload(*this, _currentUri)) {
               _currentHandler->upload(*this, _currentUri, *_currentUpload);
             }
@@ -564,14 +491,12 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
             if (_currentHandler && _currentHandler->canUpload(*this, _currentUri)) {
               _currentHandler->upload(*this, _currentUri, *_currentUpload);
             }
-            log_v("End File: %s Type: %s Size: %lu", _currentUpload->filename.c_str(), _currentUpload->type.c_str(), (unsigned long)_currentUpload->totalSize);
             if (!client.connected()) {
               return _parseFormUploadAborted();
             }
             line = client.readStringUntil('\r');
             client.readStringUntil('\n');
             if (line == "--") {  // extra two dashes mean we reached the end of all form fields
-              log_v("Done Parsing POST");
               break;
             }
             continue;
@@ -583,16 +508,16 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
     int iarg;
     int totalArgs = ((WEBSERVER_MAX_POST_ARGS - _postArgsLen) < _currentArgCount) ? (WEBSERVER_MAX_POST_ARGS - _postArgsLen) : _currentArgCount;
     for (iarg = 0; iarg < totalArgs; iarg++) {
-      RequestArgument &arg = _postArgs[_postArgsLen++];
+      RequestArgumentLite &arg = _postArgs[_postArgsLen++];
       arg.key = _currentArgs[iarg].key;
       arg.value = _currentArgs[iarg].value;
     }
     if (_currentArgs) {
       delete[] _currentArgs;
     }
-    _currentArgs = new RequestArgument[_postArgsLen];
+    _currentArgs = new RequestArgumentLite[_postArgsLen];
     for (iarg = 0; iarg < _postArgsLen; iarg++) {
-      RequestArgument &arg = _currentArgs[iarg];
+      RequestArgumentLite &arg = _currentArgs[iarg];
       arg.key = _postArgs[iarg].key;
       arg.value = _postArgs[iarg].value;
     }
@@ -604,11 +529,10 @@ bool WebServer::_parseForm(NetworkClient &client, const String &boundary, uint32
     }
     return true;
   }
-  log_e("Error: line: %s", line.c_str());
   return false;
 }
 
-String WebServer::urlDecode(const String &text) {
+String WebServerLite::urlDecode(const String &text) {
   String decoded = "";
   char temp[] = "0x00";
   unsigned int len = text.length();
@@ -633,7 +557,7 @@ String WebServer::urlDecode(const String &text) {
   return decoded;
 }
 
-bool WebServer::_parseFormUploadAborted() {
+bool WebServerLite::_parseFormUploadAborted() {
   _currentUpload->status = UPLOAD_FILE_ABORTED;
   if (_currentHandler && _currentHandler->canUpload(*this, _currentUri)) {
     _currentHandler->upload(*this, _currentUri, *_currentUpload);

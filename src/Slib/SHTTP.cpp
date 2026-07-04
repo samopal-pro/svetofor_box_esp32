@@ -129,7 +129,7 @@ void handle_fsDownload() {
  */
 void handle_fsUpload(){
 
-    HTTPUpload& upload=webServer.upload();
+    HTTPUploadLite& upload=webServer.upload();
 
 //    static String basePath;
 

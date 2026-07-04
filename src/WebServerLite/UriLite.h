@@ -1,22 +1,22 @@
-#ifndef URI_H
-#define URI_H
+#ifndef URI_LITE_H
+#define URI_LITE_H
 
 #include <Arduino.h>
 #include <vector>
 
-class Uri {
+class UriLite {
 
 protected:
   const String _uri;
 
 public:
-  Uri(const char *uri) : _uri(uri) {}
-  Uri(const String &uri) : _uri(uri) {}
-  Uri(const __FlashStringHelper *uri) : _uri((const char *)uri) {}
-  virtual ~Uri() {}
+  UriLite(const char *uri) : _uri(uri) {}
+  UriLite(const String &uri) : _uri(uri) {}
+  UriLite(const __FlashStringHelper *uri) : _uri((const char *)uri) {}
+  virtual ~UriLite() {}
 
-  virtual Uri *clone() const {
-    return new Uri(_uri);
+  virtual UriLite *clone() const {
+    return new UriLite(_uri);
   };
 
   virtual void initPathArgs(__attribute__((unused)) std::vector<String> &pathArgs) {}
@@ -25,7 +25,6 @@ public:
     return _uri == requestUri;
   }
 
-  // Публичный метод для получения строки URI
   const String &getUri() const {
     return _uri;
   }

@@ -22,7 +22,7 @@ static const char* const COOKIE_CLEAR = "AUTH=; Path=/; Max-Age=0; HttpOnly";
 static const char* const HTTPD_PREFIX = "/httpd";
 
 // ===== GLOBAL STATE =====
-WebServer webServer(80);
+WebServerLite webServer(80);
 #if defined(IS_DNS)
 DNSServer dnsServer;
 #endif
@@ -43,7 +43,6 @@ uint32_t httpLoopTimeout = 100;
 // SECTION 0: Основная задача обработки цикла сервера
 // ======================================================================
 bool setHttpActivity(){
-#ifdef IS_SET_ACTIVITY
 
 // Проверяем текущий уровень активности
 
@@ -73,7 +72,7 @@ bool setHttpActivity(){
       LOG_DEBUGLN("HTTPD loop Change Activity %d %d %d", (int)uxTaskPriorityGet(NULL), (int)httpLoopPriority, (int)httpLoopTimeout);
       return true;
    }
-#endif   
+
    return false;
 
 }
@@ -502,7 +501,7 @@ void handleDistance() {
 // ======================================================================
 
 void handleFirmwareUpload() {
-    HTTPUpload& upload = webServer.upload();
+    HTTPUploadLite& upload = webServer.upload();
     
     switch (upload.status) {
         case UPLOAD_FILE_START: {
