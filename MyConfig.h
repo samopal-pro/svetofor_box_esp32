@@ -21,9 +21,14 @@
 #define IS_LORA
 #define IS_DNS
 
-#define SOFTWARE_V           "10.1.1"
+ 
+#define SOFTWARE_V           "10.1.2"
 #define HARDWARE_V           "10.0.0"
+#define HTTPD_V              "10.1.0"
+#define CONFIG_V             "10.1.0"
 
+#define FW_VERSION           SOFTWARE_V
+#define FW_NAME              "SVETOFORBOX_ESP32_V10"
 
 
 #define PIN_LORA_MOSI        23
@@ -128,3 +133,16 @@
 // ESM_ENABLE - перемычка BUSY-SDA есть, статус MP3 Плеера определяется через PIN_I2C_SDA
 // ESM_AUTO - автоопределение перемычки (первый цикл параллельно UART и PIN) 
 #define DEFAULT_MP3_GPIO       ESM_AUTO
+
+// Версия веб-интерфейса
+#ifndef HTTPD_V
+#define HTTPD_V "1.0.0"
+#endif
+
+// Пути для работы с веб-файлами
+#define WEB_TAR_PATH       "/httpd.tar"
+#define WEB_HTTPD_PATH     "/httpd"
+#define WEB_VERSION_FILE   "/httpd/version.json"
+#define WEB_EXCLUDE_FILES  "/httpd/config/config1.json,/httpd/config/config2.json,/httpd/config/save.json"
+
+#define TM_TB_CHECK 15000  // Интервал проверки обновления версии в мс

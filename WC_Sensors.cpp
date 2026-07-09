@@ -357,3 +357,4 @@ void MySensor::scanI2C(){
       LOG_INFOLN("Found %d I2C device(s)", nDevices);
    }
 }
+

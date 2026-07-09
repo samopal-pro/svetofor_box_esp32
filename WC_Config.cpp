@@ -6,6 +6,12 @@
 
 #include "WC_Config.h"
 
+static const custom_app_desc_t __attribute__((section(".rodata_custom_desc"), used)) custom_app_desc = {
+    .fw_magic   = ESP_APP_DESC_MAGIC_WORD,
+    .fw_name    = FW_NAME,
+    .fw_version = FW_VERSION
+};
+
 
 // ===== Global Variables =====
 char strID[MAC_STR_LEN] = {0};
@@ -242,6 +248,45 @@ bool writeJson(const char* file_path, const JsonDocument& doc) {
     DEBUG_JSON_DOC(file_path, doc);
     
     return true;
+}
+
+/**
+* Чтение имени иверсии прошивки и SHA сигнатуры
+*/
+void printFW(){
+       
+    // Читаем данные из структуры (они уже в памяти)
+    LOG_INFOLN("FW NAME: %s", custom_app_desc.fw_name);
+    LOG_INFOLN("FW VERSION: %s", custom_app_desc.fw_version);
+    
+    // Вывод информации о размере
+    LOG_INFOLN("FW DATA SIZE: %d bytes", sizeof(custom_app_desc));
+    LOG_INFOLN("FW DATA ADDR: 0x%X", (uint32_t)&custom_app_desc);
+
+    // Получаем указатель на текущий запущенный OTA-раздел
+    const esp_partition_t* running = esp_ota_get_running_partition();
+
+    // Получаем информацию о прошивке в этом разделе
+    esp_app_desc_t app_info;
+    if (esp_ota_get_partition_description(running, &app_info) == ESP_OK) {
+        LOG_INFOLN("FW ORIG MAGIC: %lX", app_info.magic_word);
+        LOG_INFOLN("FW ORIG NAME: %s", app_info.project_name);
+        LOG_INFOLN("FW ORIG VERS: %s", app_info.version);
+        LOG_INFO("FW ORIG SHA:  %s", app_info.app_elf_sha256);
+        for( int i=0; i<32; i++ )Serial.printf(" %02X",app_info.app_elf_sha256[i]);
+        Serial.println();
+//        LOG_INFOLN("FW ORIG SIZE: %d bytes", app_info.bin_size); // Размер прошивки
+    }
+    // Вывод информации о размере
+    LOG_INFOLN("FW ORIG SIZE: %d bytes", sizeof(app_info));
+    LOG_INFOLN("FW ORIG ADDR: 0x%X", (uint32_t)&app_info);
+
+    // Получаем SHA-256 хеш прошивки
+    char sha_256[65];
+    if (esp_ota_get_app_elf_sha256(sha_256, sizeof(sha_256)) == ESP_OK) {
+        LOG_INFOLN("FW ELF SHA: %s", sha_256);
+    }
+
 }
 
 /**

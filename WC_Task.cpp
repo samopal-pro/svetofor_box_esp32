@@ -58,6 +58,8 @@ void tasksStart() {
   Serial.println(heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
   readID();
   configInit();
+  printFW();
+  //delay(3000000);
   bootCount = saveCount(); 
   
   //    xTaskCreateUniversal(taskLed, "led", 2048, NULL, 2, NULL,CORE);

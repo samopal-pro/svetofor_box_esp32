@@ -6,12 +6,18 @@
 #include <esp_heap_caps.h>
 #include <esp_mac.h>
 #include <esp32-hal-touch.h>
+#include <esp_ota_ops.h>
 
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
 #include "MyConfig.h"
 
+typedef struct {
+    uint32_t fw_magic;
+    char fw_name[28];
+    char fw_version[16];
+} custom_app_desc_t;
 
 // ===== Path Constants =====
 #define CONFIG_SELECTOR_PATH    "/httpd/config/config.json"
@@ -121,6 +127,7 @@ bool writeJson(const char* file_path, const JsonDocument& doc);
 bool readJson(const char* file_path, JsonDocument& doc);
 
 // ===== System Functions =====
+void printFW();
 void readID();
 String deviceName();
 void listDir(const char* dirname, uint8_t levels);
