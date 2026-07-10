@@ -22,7 +22,7 @@
 #define IS_DNS
 
  
-#define SOFTWARE_V           "10.1.2"
+#define SOFTWARE_V           "10.1.3"
 #define HARDWARE_V           "10.0.0"
 #define HTTPD_V              "10.1.0"
 #define CONFIG_V             "10.1.0"
@@ -135,13 +135,14 @@
 #define DEFAULT_MP3_GPIO       ESM_AUTO
 
 // Версия веб-интерфейса
-#ifndef HTTPD_V
-#define HTTPD_V "1.0.0"
-#endif
+
+
+
+#define HTTPD_PATH_PREFIX   "/httpd"
 
 // Пути для работы с веб-файлами
 #define WEB_TAR_PATH       "/httpd.tar"
-#define WEB_HTTPD_PATH     "/httpd"
+#define WEB_HTTPD_PATH     HTTPD_PATH_PREFIX
 #define WEB_VERSION_FILE   "/httpd/version.json"
 #define WEB_EXCLUDE_FILES  "/httpd/config/config1.json,/httpd/config/config2.json,/httpd/config/save.json"
 

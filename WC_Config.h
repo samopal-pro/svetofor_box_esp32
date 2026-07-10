@@ -22,7 +22,6 @@ typedef struct {
 // ===== Path Constants =====
 #define CONFIG_SELECTOR_PATH    "/httpd/config/config.json"
 #define SAVE_JSON_PATH          "/httpd/config/save.json"
-#define HTTPD_PATH_PREFIX       "/httpd"
 
 // ===== Buffer Sizes =====
 #define MAC_STR_LEN             13

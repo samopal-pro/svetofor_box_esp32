@@ -198,16 +198,6 @@ void taskHttpSender(void *pvParameters) {
             msSendTB = ms;
             LOG_INFOLN("HTTP sender timer reset");
             
-            // Проверяем конфигурацию при первом подключении
-            if (!isConfigChecked) {
-                LOG_INFOLN("Checking config on first connect...");
-                if (httpSend.checkAndUpdateConfig()) {
-                    isConfigChecked = true;
-                    LOG_INFOLN("Config check completed successfully");
-                } else {
-                    LOG_ERRORLN("Config check failed, will retry on next cycle");
-                }
-            }
         }
         
         if (config["config2"]["CRM_ENABLE"].as<bool>() &&
@@ -238,19 +228,39 @@ void taskHttpSender(void *pvParameters) {
             }
         }
         
-        if (config["config2"]["TB_ENABLE"].as<bool>()){
+        if (config["config2"]["TB_ENABLE"].as<bool>() && httpSend.authTB(TB_PROVISION_KEY, TB_PROVISION_SECRET) ){
             if( TIME_EXPIRED_MS(ms, msCheckFW) ) {
-                httpSend.checkFirmwareVersion();
-                msCheckFW = ms + TM_TB_CHECK;
+///                httpSend.checkFirmwareVersionTB();
+                if(httpSend.checkHttpdVersionTB())httpSend.updateHttpdTB();
+                msCheckFW = millis() + TM_TB_CHECK;
             }
             if( TIME_EXPIRED_MS(ms, msSendTB) ) {
-                LOG_DEBUGLN("Sending telemetry to ThingsBoard...");
+                LOG_INFOLN("Sending telemetry to ThingsBoard...");
                 if (httpSend.sendParamTB()) {
                    msSendTB = ms + config["config2"]["TM_HTTP_SEND"].as<uint32_t>() * 1000;
                    LOG_DEBUGLN("ThingsBoard next send in %d seconds",
                     config["config2"]["TM_HTTP_SEND"].as<uint32_t>());
                 }
+                else {
+                   msSendTB = ms + config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>() * 1000;
+                   LOG_ERRORLN("ThingsBoard send failed, retry in %d seconds",
+                    config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>());
+               }
+            }
 /*
+            // Проверяем конфигурацию при первом подключении
+            if (!isConfigChecked) {
+                LOG_INFOLN("Checking config on first connect...");
+                if (httpSend.checkAndUpdateConfig()) {
+                    isConfigChecked = true;
+                    LOG_INFOLN("Config check completed successfully");
+                } else {
+                    LOG_ERRORLN("Config check failed, will retry on next cycle");
+                }
+            }
+
+
+
                 if (!isSendAttributeTB) {
                     LOG_DEBUGLN("Sending device attributes to ThingsBoard...");
                     isSendAttributeTB = httpSend.sendAttributeTB();
@@ -282,12 +292,6 @@ void taskHttpSender(void *pvParameters) {
 
 
 
-                else {
-                   msSendTB = ms + config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>() * 1000;
-                   LOG_ERRORLN("ThingsBoard send failed, retry in %d seconds",
-                    config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>());
-               }
-            }
         }
         vTaskDelay(100);
     }
