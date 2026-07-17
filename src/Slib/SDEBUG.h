@@ -279,6 +279,29 @@
   #define DEBUG_JSON_DOC_COMPACT(label, doc) ((void)0)
 #endif
 
+// ===== МАКРОСЫ ДЛЯ JSON =====
+#if _EFFECTIVE_LEVEL >= DEBUG_INFO
+  #define INFO_JSON_DOC(label, doc) \
+    do { \
+      SDEBUG_PRINT_PREFIX(SDEBUG_STR_MSG); \
+      Serial.printf("JSON %s:\r\n", label); \
+      String _jsonStr; \
+      serializeJsonPretty(doc, _jsonStr); \
+      Serial.println(_jsonStr); \
+    } while(0)
+    
+  #define INFO_JSON_DOC_COMPACT(label, doc) \
+    do { \
+      SDEBUG_PRINT_PREFIX(SDEBUG_STR_MSG); \
+      Serial.printf("JSON %s: ", label); \
+      serializeJson(doc, Serial); \
+      Serial.println(); \
+    } while(0)
+#else
+  #define INFO_JSON_DOC(label, doc) ((void)0)
+  #define INFO_JSON_DOC_COMPACT(label, doc) ((void)0)
+#endif
+
 // ===== МАКРОСЫ ДЛЯ ПАМЯТИ =====
 #if _EFFECTIVE_LEVEL >= DEBUG_DEBUG
   #define DEBUG_MEMORY() \

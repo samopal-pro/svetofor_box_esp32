@@ -25,7 +25,7 @@
         {"value":"2","name":"Авто"}
       ]
     },
-    { "type": "select", "label": "**Введите имя вашей WI-FI сети:", "name": "WIFI_NAME1", "request":"/cmd", "cmd":"wifi_list", "width": "280px" },
+    { "type": "wifi", "label": "**Введите имя вашей WI-FI сети:", "name": "WIFI_NAME1", "request":"/cmd", "cmd":"wifi_list", "width": "253px" },
     { "type": "password", "label": "**Введите пароль от вашей WI-FI сети:", "name": "WIFI_PASS1",  "width": "253px" },
     { "type": "hidden", "name": "WIFI_NAME2" },
     { "type": "hidden", "name": "WIFI_PASS2" },

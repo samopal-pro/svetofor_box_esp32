@@ -1,5 +1,5 @@
 // ============================================
-// Файл: src/Slib/SHTTPClient.h (исправленный)
+// Файл: src/Slib/SHTTPClient.h
 // ============================================
 #pragma once
 
@@ -30,49 +30,49 @@ public:
     // Инициализация клиента
     bool begin();
     
+    bool GET_STREAM(const char* host, uint16_t port, const String& path, const String& extraHeaders, const uint32_t waitTM = 5000);
+
     // Выполняет GET запрос
-    HttpResponse GET(const char* host, uint16_t port, const String& path, const String& extraHeaders = "");
+    bool GET(const char* host, uint16_t port, const String& path, const String& extraHeaders = "", const uint32_t waitTM = 5000);
     
     // Выполняет POST запрос
-    HttpResponse POST(const char* host, uint16_t port, const String& path, const String& contentType, const String& payload, const String& extraHeaders = "");
+    bool POST(const char* host, uint16_t port, const String& path, const String& contentType, const String& payload, const String& extraHeaders = "", const uint32_t waitTM = 5000);
     
     // Выполняет POST запрос с JSON данными
-    HttpResponse POST_JSON(const char* host, uint16_t port, const String& path, const String& json, const String& extraHeaders = "");
+    bool POST_JSON(const char* host, uint16_t port, const String& path, const String& json, const String& extraHeaders = "", const uint32_t waitTM = 5000);
     
     // Выполняет POST запрос с текстовыми данными
-    HttpResponse POST_TEXT(const char* host, uint16_t port, const String& path, const String& text, const String& extraHeaders = "");
+    bool POST_TEXT(const char* host, uint16_t port, const String& path, const String& text, const String& extraHeaders = "", const uint32_t waitTM = 5000);
     
     // Выполняет POST запрос с потоковыми данными
-    HttpResponse POST_STREAM(const char* host, uint16_t port, const String& path, const String& contentType, Stream& payloadStream, size_t contentLength, const String& extraHeaders = "");
+//    HttpResponse POST_STREAM(const char* host, uint16_t port, const String& path, const String& contentType, Stream& payloadStream, size_t contentLength, const String& extraHeaders = "");
     
     // Устанавливает соединение и отправляет GET запрос
-    bool connectAndSendRequest(const char* host, uint16_t port, const String& path, const String& extraHeaders = "");
+//    bool connectAndSendRequest(const char* host, uint16_t port, const String& path, const String& extraHeaders = "");
    
-    // Выполняет GET запрос с возможностью стримингового чтения
-    HttpResponse GET_STREAM(const char* host, uint16_t port, const String& path, const String& extraHeaders = "", bool* isChunked = nullptr);
-    
-    // Читает один чанк из стримингового ответа (для chunked режима)
-    bool readChunk(uint8_t* buffer, size_t bufferSize, size_t& bytesRead);
-    
-    // Читает данные из обычного (не chunked) ответа
-    bool readPlainData(uint8_t* buffer, size_t bufferSize, size_t& bytesRead);
-    
-    // Проверяет, доступны ли данные для чтения
-    bool isDataAvailable();
-    
-    // Проверяет, установлено ли соединение
-    bool isConnected();
-    
-    // Проверяет, находится ли клиент в chunked режиме
-    bool isChunkedMode();
-    
     // Публичный метод для разбора HTTP ответа из внешнего кода
-    static bool parseHttpResponseShared(const String& Str, HttpResponse& response);
+//    static bool parseHttpResponseShared(const String& Str, HttpResponse& response);
     
     // Закрывает соединение
     void stop();
     
-    WiFiClient m_client;  // Переиспользуемый клиент (публичный для стримингового доступа)
+    // Ожидает ответ сервера tm миллисекунд
+    bool waitResponse(uint32_t tm);
+    
+    // Читает код HTTP в m_response.statusCode
+    bool readStatusCode();
+    
+    // Читает заголовки HTTP в m_response.headers
+    bool readHeader();
+
+    // Вернуть значение заголовка с заданным именем
+    String getHeaderValue(const String& name) const;    
+    
+    // Читает тело HTTP в m_response.body
+    bool readBody();
+    
+    HttpResponse m_response;  // Результат HTTP запроса
+    WiFiClient m_client;      // Переиспользуемый клиент (публичный для стримингового доступа)
 
 private:
     // Читает ответ от сервера
@@ -80,6 +80,9 @@ private:
     
     // Разбирает HTTP ответ
     bool parseHttpResponse(const String& Str, HttpResponse& response);
+    
+    // Сбрасывает m_response в начальное состояние
+    void resetResponse();
     
     bool m_connected;
     bool m_chunkedMode;

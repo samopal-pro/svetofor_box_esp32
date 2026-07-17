@@ -103,10 +103,13 @@ extern char strID[MAC_STR_LEN];
 extern char serNo[SERIAL_NO_LEN];
 extern uint64_t chipID;
 
+extern String configUUID;
+
 extern JsonDocument config_selector;
 extern JsonDocument config;
 extern JsonDocument config_default;
 extern JsonDocument jsonSave;
+extern JsonDocument httpd_version;
 
 // Используем массивы для совместимости со старым кодом
 extern char activeConfig[16];
@@ -129,6 +132,7 @@ bool readJson(const char* file_path, JsonDocument& doc);
 void printFW();
 void readID();
 String deviceName();
+char *generateUUID(char* buffer);
 void listDir(const char* dirname, uint8_t levels);
 
 // ===== JSON Merge Functions =====

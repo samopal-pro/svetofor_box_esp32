@@ -18,8 +18,11 @@ char strID[MAC_STR_LEN] = {0};
 char serNo[SERIAL_NO_LEN] = {0};
 uint64_t chipID = 0;
 
+String configUUID = "";
+
 JsonDocument config_selector;
 JsonDocument config;
+JsonDocument httpd_version;
 JsonDocument config_default;
 JsonDocument jsonSave;
 
@@ -67,7 +70,9 @@ void configInit() {
     
     LOG_INFOLN("LittleFS mounted, listing files:");
     listDir("/", 2);
-    
+    char uuid[40];
+    configUUID             = generateUUID(uuid);
+    readJson(WEB_VERSION_FILE, httpd_version);
     // Загружаем селектор конфигурации
     if (!readJson(CONFIG_SELECTOR_PATH, config_selector)) {
         LOG_ERRORLN("Failed to load config selector: %s", CONFIG_SELECTOR_PATH);
@@ -505,4 +510,30 @@ String deviceName() {
     
     LOG_DEBUGLN("Device name: %s", name.c_str());
     return name;
+}
+
+/**
+ * Генерирует UUID v4 на основе аппаратного ГСЧ ESP32.
+ * Буфер должен быть размером не менее 37 байт (36 символов + терминатор).
+ */
+char *generateUUID(char* buffer) {
+    static const char hex[] = "0123456789abcdef";
+
+    for (int i = 0; i < 36; ++i) {
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            buffer[i] = '-';
+        } else if (i == 14) {
+            buffer[i] = '4';
+        } else if (i == 19) {
+            uint8_t variant = esp_random() & 0x03;
+            buffer[i] = (variant == 0x00) ? '8' :
+                        (variant == 0x01) ? '9' :
+                        (variant == 0x02) ? 'a' : 'b';
+        } else {
+            buffer[i] = hex[esp_random() & 0x0F];
+        }
+    }
+
+    buffer[36] = '\0';
+    return buffer;
 }

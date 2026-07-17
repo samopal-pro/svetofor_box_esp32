@@ -42,17 +42,30 @@ void SimpleHttpClient::stop() {
 // GET запросы
 //*********************************************************************************************************************
 
-// Выполняет GET запрос
-HttpResponse SimpleHttpClient::GET(
+// ============================================
+// Файл: src/Slib/SHTTPClient.cpp (добавить после блока GET запросы)
+// ============================================
+
+//*********************************************************************************************************************
+// Стриминговые запросы
+//*********************************************************************************************************************
+
+/**
+ * Отправляет GET запрос, читает статус и заголовки, оставляет соединение открытым для чтения тела
+ */
+bool SimpleHttpClient::GET_STREAM(
     const char* host,
     uint16_t port,
     const String& path,
-    const String& extraHeaders
+    const String& extraHeaders,
+    const uint32_t waitTM
 ) {
-    HttpResponse response;
+    resetResponse();
+    begin();
     if (!m_client.connect(host, port)) {
-        return response;
+        return false;
     }
+//    Serial.printf("!!! GET %s:%d %s\n",host,port,path.c_str());
     m_connected = true;
     m_client.printf(
         "GET %s HTTP/1.1\r\n"
@@ -65,8 +78,43 @@ HttpResponse SimpleHttpClient::GET(
         m_client.print(extraHeaders);
     }
     m_client.print("\r\n");
-    readResponse(response);
-    return response;
+
+    if (!waitResponse(waitTM)) {
+        Serial.println("!!! GET not response");
+        stop();
+        return false;
+    }
+    if (!readStatusCode()) {
+        Serial.println("!!! GET not status");
+        stop();
+        return false;
+    }
+    if (!readHeader()) {
+        Serial.println("!!! GET not header");
+        stop();
+        return false;
+    }
+    return true;
+}
+
+
+
+/**
+ * Отправляет GET запрос и закрываеи соединение
+ */
+bool SimpleHttpClient::GET(
+    const char* host,
+    uint16_t port,
+    const String& path,
+    const String& extraHeaders,
+    const uint32_t waitTM
+) {
+
+    bool ret = GET_STREAM(host,port,path,extraHeaders,waitTM);
+//    Serial.printf("!!! GET body %d\n",(int)ret);
+    if( ret  )ret = readBody();
+    stop();
+    return ret;
 }
 
 //*********************************************************************************************************************
@@ -74,17 +122,19 @@ HttpResponse SimpleHttpClient::GET(
 //*********************************************************************************************************************
 
 // Выполняет POST запрос
-HttpResponse SimpleHttpClient::POST(
+bool SimpleHttpClient::POST(
     const char* host,
     uint16_t port,
     const String& path,
     const String& contentType,
     const String& payload,
-    const String& extraHeaders
+    const String& extraHeaders,
+    const uint32_t waitTM
 ) {
-    HttpResponse response;
+    resetResponse();
+    begin();
     if (!m_client.connect(host, port)) {
-        return response;
+        return false;
     }
     m_connected = true;
     m_client.printf(
@@ -103,33 +153,51 @@ HttpResponse SimpleHttpClient::POST(
     }
     m_client.print("\r\n");
     m_client.print(payload);
-    readResponse(response);
-    return response;
+    if (!waitResponse(waitTM)) {
+        Serial.println("!?!?! Error wait");
+        stop();
+        return false;
+    }
+    if (!readStatusCode()) {
+        Serial.println("!?!?! Error status");
+        stop();
+        return false;
+    }
+    if (!readHeader()) {
+        Serial.println("!?!?! Error header");
+        stop();
+        return false;
+    }
+    readBody();
+    return true;
 }
 
 // Выполняет POST запрос с JSON данными
-HttpResponse SimpleHttpClient::POST_JSON(
+bool SimpleHttpClient::POST_JSON(
     const char* host,
     uint16_t port,
     const String& path,
     const String& json,
-    const String& extraHeaders
+    const String& extraHeaders,
+    const uint32_t waitTM
 ) {
     return POST(host, port, path, "application/json", json, extraHeaders);
 }
 
 // Выполняет POST запрос с текстовыми данными
-HttpResponse SimpleHttpClient::POST_TEXT(
+bool SimpleHttpClient::POST_TEXT(
     const char* host,
     uint16_t port,
     const String& path,
     const String& text,
-    const String& extraHeaders
+    const String& extraHeaders,
+    const uint32_t waitTM
 ) {
     return POST(host, port, path, "text/plain", text, extraHeaders);
 }
 
 // Выполняет POST запрос с потоковыми данными
+/*
 HttpResponse SimpleHttpClient::POST_STREAM(
     const char* host,
     uint16_t port,
@@ -175,12 +243,14 @@ HttpResponse SimpleHttpClient::POST_STREAM(
     readResponse(response);
     return response;
 }
+*/
 
 //*********************************************************************************************************************
 // Стриминговые запросы
 //*********************************************************************************************************************
 
 // Устанавливает соединение и отправляет GET запрос
+/*
 bool SimpleHttpClient::connectAndSendRequest(
     const char* host,
     uint16_t port,
@@ -204,159 +274,12 @@ bool SimpleHttpClient::connectAndSendRequest(
     m_client.print("\r\n");
     return true;
 }
-
-// Выполняет GET запрос с возможностью стримингового чтения
-HttpResponse SimpleHttpClient::GET_STREAM(
-    const char* host,
-    uint16_t port,
-    const String& path,
-    const String& extraHeaders,
-    bool* isChunked
-) {
-    HttpResponse response;
-    m_chunkedMode = false;
-    m_currentChunkSize = 0;
-    
-    if (!connectAndSendRequest(host, port, path, extraHeaders)) {
-        return response;
-    }
-    
-    // Ожидаем ответ
-    unsigned long timeout = millis();
-    while (!m_client.available()) {
-        if (millis() - timeout > 10000) {
-            m_client.stop();
-            m_connected = false;
-            return response;
-        }
-        vTaskDelay(1);
-    }
-    
-    // Читаем статусную строку
-    String statusLine = m_client.readStringUntil('\n');
-    if (!statusLine.startsWith("HTTP/1.1 200")) {
-        m_client.stop();
-        m_connected = false;
-        return response;
-    }
-    
-    // Парсим заголовки
-    String line;
-    int contentLength = -1;
-    bool chunked = false;
-    
-    while ((line = m_client.readStringUntil('\n')) != "\r" && line != "\n") {
-        line.trim();
-        response.headers += line + "\r\n";
-//        Serial.printf("!!! HttpSend: Header: %s\n", line.c_str());
-        
-        if (line.startsWith("Content-Length:")) {
-            contentLength = line.substring(line.indexOf(':') + 1).toInt();
-        } else if (line.startsWith("Transfer-Encoding:") && line.indexOf("chunked") >= 0) {
-            chunked = true;
-        }
-    }
-    
-    response.statusCode = 200;
-    
-    // Сохраняем режим передачи
-    m_chunkedMode = chunked;
-    m_currentChunkSize = 0;
-    
-    if (isChunked != nullptr) {
-        *isChunked = chunked;
-    }
-    
-    // Для любого режима (chunked или обычный) оставляем соединение открытым
-    // и НЕ читаем тело ответа, чтобы можно было читать потоково
-    response.body = "";
-    
-    // Не закрываем клиент! Он остается открытым для потокового чтения
-    // m_client.stop() не вызывается
-    
-    return response;
-}
-
-// Читает один чанк из стримингового ответа
-bool SimpleHttpClient::readChunk(uint8_t* buffer, size_t bufferSize, size_t& bytesRead) {
-    bytesRead = 0;
-    
-    // Проверяем, что соединение активно и мы в chunked режиме
-    if (!m_client.connected() || !m_chunkedMode) {
-        return false;
-    }
-    
-    // Если текущий чанк закончился, читаем следующий
-    if (m_currentChunkSize == 0) {
-        // Читаем размер чанка
-        String chunkHeader = m_client.readStringUntil('\n');
-        chunkHeader.trim();
-        if (chunkHeader.isEmpty()) {
-            return false;
-        }
-        
-        // Парсим размер в hex
-        m_currentChunkSize = strtol(chunkHeader.c_str(), NULL, 16);
-        
-        // Если чанк нулевого размера - конец данных
-        if (m_currentChunkSize == 0) {
-            // Пропускаем завершающий CRLF
-            m_client.readStringUntil('\n');
-            m_chunkedMode = false;
-            return false;
-        }
-    }
-    
-    // Читаем данные чанка
-    size_t toRead = min(bufferSize, m_currentChunkSize);
-    bytesRead = m_client.readBytes(buffer, toRead);
-    m_currentChunkSize -= bytesRead;
-    
-    // Если чанк полностью прочитан, пропускаем завершающий CRLF
-    if (m_currentChunkSize == 0) {
-        m_client.readStringUntil('\n');
-    }
-    
-    return (bytesRead > 0);
-}
-
-// Читает данные из обычного (не chunked) ответа
-bool SimpleHttpClient::readPlainData(uint8_t* buffer, size_t bufferSize, size_t& bytesRead) {
-    bytesRead = 0;
-    
-    // Проверяем, что соединение активно и мы НЕ в chunked режиме
-    if (!m_client.connected() || m_chunkedMode) {
-        return false;
-    }
-    
-    // Читаем доступные данные
-    if (m_client.available()) {
-        bytesRead = m_client.readBytes(buffer, bufferSize);
-        return (bytesRead > 0);
-    }
-    
-    return false;
-}
-
-// Проверяет, доступны ли данные для чтения
-bool SimpleHttpClient::isDataAvailable() {
-    return m_client.available() > 0;
-}
-
-// Проверяет, установлено ли соединение
-bool SimpleHttpClient::isConnected() {
-    return m_client.connected();
-}
-
-// Проверяет, находится ли клиент в chunked режиме
-bool SimpleHttpClient::isChunkedMode() {
-    return m_chunkedMode;
-}
+*/
 
 //*********************************************************************************************************************
 // Вспомогательные методы
 //*********************************************************************************************************************
-
+/*
 // Читает ответ от сервера
 void SimpleHttpClient::readResponse(HttpResponse& response) {
     unsigned long timeout = millis();
@@ -418,4 +341,133 @@ bool SimpleHttpClient::parseHttpResponse(const String& Str, HttpResponse& respon
 bool SimpleHttpClient::parseHttpResponseShared(const String& Str, HttpResponse& response) {
     SimpleHttpClient client;
     return client.parseHttpResponse(Str, response);
+}
+*/
+//*********************************************************************************************************************
+// Вспомогательные методы
+//*********************************************************************************************************************
+
+/**
+ * Сбрасывает m_response в начальное состояние
+ */
+void SimpleHttpClient::resetResponse() {
+    m_response.statusCode = -1;
+    m_response.headers = "";
+    m_response.body = "";
+}
+
+/**
+ * Ожидает ответ сервера tm миллисекунд
+ */
+bool SimpleHttpClient::waitResponse(uint32_t tm) {
+    unsigned long timeout = millis();
+    while (!m_client.available()) {
+        if (millis() - timeout > tm) {
+            Serial.println("?!?!?! Stop Wait");
+            return false;
+        }
+        vTaskDelay(1);
+    }
+    return true;
+}
+
+/**
+ * Читает код HTTP в m_response.statusCode
+ */
+bool SimpleHttpClient::readStatusCode() {
+    if (!m_client.connected()) {
+        return false;
+    }
+    String statusLine = m_client.readStringUntil('\r');
+    m_client.read(); // пропустить '\n'
+    
+    int firstSpace = statusLine.indexOf(' ');
+    int secondSpace = statusLine.indexOf(' ', firstSpace + 1);
+    if (firstSpace != -1 && secondSpace != -1) {
+        m_response.statusCode = statusLine.substring(firstSpace + 1, secondSpace).toInt();
+    } else if (firstSpace != -1) {
+        m_response.statusCode = statusLine.substring(firstSpace + 1).toInt();
+    } else {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Читает заголовки HTTP в m_response.headers
+ */
+bool SimpleHttpClient::readHeader() {
+    if (!m_client.connected() && !m_client.available()) {
+        return false;
+    }
+    m_response.headers = "";
+    while (m_client.connected() || m_client.available()) {
+        if (!m_client.available()) {
+            vTaskDelay(1);
+            continue;
+        }       
+        String line = m_client.readStringUntil('\r');
+        m_client.read(); // пропустить '\n'
+        if (line.length() == 0) {
+            break;
+        }
+        if (m_response.headers.length() > 0) {
+            m_response.headers += "\r\n";
+        }
+        m_response.headers += line;
+    }
+//    Serial.println("!!! Headers");
+//    Serial.printf("!!! Headers: %s\n",m_response.headers.c_str());
+//    Serial.println("!!! Headers");
+    return true;
+}
+
+/**
+ * Извлекает значение HTTP-заголовка по имени из строки ответа
+ */
+String SimpleHttpClient::getHeaderValue(const String& name) const {
+  if (m_response.headers.isEmpty() || name.isEmpty()) {
+    return "";
+  }
+  int pos = 0;
+  while (pos < m_response.headers.length()) {
+    int lineEnd = m_response.headers.indexOf('\n', pos);
+    if (lineEnd == -1) {
+      lineEnd = m_response.headers.length();
+    }
+    String line = m_response.headers.substring(pos, lineEnd);
+    line.trim();
+    int colonPos = line.indexOf(':');
+    if (colonPos != -1) {
+      String headerName = line.substring(0, colonPos);
+      headerName.trim();
+      if (headerName.equalsIgnoreCase(name)) {
+        String value = line.substring(colonPos + 1);
+        value.trim();
+        return value;
+      }
+    }
+    pos = lineEnd + 1;
+  }
+  return "";
+}
+
+
+/**
+ * Читает тело HTTP в m_response.body
+ */
+bool SimpleHttpClient::readBody() {
+    if (!m_client.connected() && !m_client.available()) {
+        return false;
+    }
+    m_response.body = "";
+    while (m_client.connected() || m_client.available()) {
+        if (!m_client.available()) {
+            vTaskDelay(1);
+            continue;
+        }       
+        m_response.body += m_client.readString();
+    }
+    m_response.body.trim();
+    return true;
 }

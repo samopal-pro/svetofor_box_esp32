@@ -363,6 +363,7 @@ String MyHttpSend::readOrCreateVersionFile() {
 */
 bool MyHttpSend::sendStreamToTB(const String& tbHost, int tbPort, const String& tbToken,
                                  const String& infoJson, size_t archiveSize) {
+/*
     File tarFile = LittleFS.open(m_tarPath, FILE_READ);
     if (!tarFile) {
         LOG_ERRORLN("HttpSend: Failed to open archive for streaming");
@@ -407,6 +408,8 @@ bool MyHttpSend::sendStreamToTB(const String& tbHost, int tbPort, const String& 
         LOG_ERRORLN("HttpSend: Stream send failed, status: %d", response.statusCode);
         return false;
     }
+*/
+return false;
 }
 
 /**
@@ -414,6 +417,7 @@ bool MyHttpSend::sendStreamToTB(const String& tbHost, int tbPort, const String& 
 */
 bool MyHttpSend::sendWebFilesToTB() {
     LOG_INFOLN("HttpSend: Starting send to ThingsBoard");
+/*
     if (config["config2"]["TB_TOKEN"].isNull() || config["config2"]["TB_TOKEN"].as<String>().isEmpty()) {
         LOG_ERRORLN("HttpSend: TB_TOKEN not configured");
         return false;
@@ -449,6 +453,8 @@ bool MyHttpSend::sendWebFilesToTB() {
     bool result = sendStreamToTB(tbHost, tbPort, tbToken, infoJson, archiveSize);
     cleanupTempFiles();
     return result;
+*/
+return false;
 }
 
 /**
@@ -501,8 +507,7 @@ uint16_t KeyGen(char *str) {
 * Отправка в CRM Москва
 */
 bool MyHttpSend::sendCrmMoscowParam() {
-    bool ret = false;
-    char s[64];
+   char s[64];
     uint32_t tm = millis() / 1000;
     int dist = (int)Distance;
     int stat = getStatus();
@@ -522,17 +527,16 @@ bool MyHttpSend::sendCrmMoscowParam() {
     LOG_DEBUGLN("HttpSend: CRM request URL: %s%s",
         config["config2"]["CRM_HOST"].as<const char *>(), url);
         
-    m_httpClient.begin();
-    HttpResponse response = m_httpClient.GET(
+    bool ret = m_httpClient.GET(
         config["config2"]["CRM_HOST"].as<const char *>(),
         config["config2"]["TB_PORT"].as<int>(),
         url);
         
-    if (response.statusCode == 200) {
+    if (ret && m_httpClient.m_response.statusCode == 200) {
         LOG_INFOLN("HttpSend: CRM data sent successfully");
         ret = true;
     } else {
-        LOG_ERRORLN("HttpSend: CRM send error, HTTP status: %d", response.statusCode);
+        LOG_ERRORLN("HttpSend: CRM send error, HTTP status: %d", m_httpClient.m_response.statusCode);
     }
     return ret;
 }
@@ -569,7 +573,7 @@ bool MyHttpSend::sendHttpParam() {
 /**
 * Отправка на один HTTP шлюз
 */
-bool MyHttpSend::sendHttpParamOne(String &host) {
+bool MyHttpSend::sendHttpParamOne(String &host) { 
     char s[64];
     uint32_t tm = millis() / 1000;
     int dist = (int)Distance;
@@ -600,16 +604,16 @@ bool MyHttpSend::sendHttpParamOne(String &host) {
     int port = config["config2"]["HTTP_PORT"].as<int>();
     if (port == 0) port = 80;
     
-    m_httpClient.begin();
-    HttpResponse response = m_httpClient.GET(host.c_str(), port, path);
+    bool ret = m_httpClient.GET(host.c_str(), port, path);
     
-    if (response.statusCode == 200) {
+    if (ret && m_httpClient.m_response.statusCode == 200) {
         LOG_INFOLN("HttpSend: HTTP data sent successfully to: %s", host.c_str());
         return true;
     } else {
-        LOG_ERRORLN("HttpSend: HTTP send error to %s, status: %d", host.c_str(), response.statusCode);
+        LOG_ERRORLN("HttpSend: HTTP send error to %s, status: %d", host.c_str(), m_httpClient.m_response.statusCode);
         return false;
     }
+return false;    
 }
 
 /**
@@ -627,55 +631,9 @@ void MyHttpSend::checkConfigVersion() {
 }
 
 /**
-* Отправка конфигурации в ThingsBoard
-*/
-bool MyHttpSend::sendConfigToTB() {
-    bool ret = false;
-    checkConfigVersion();
-    
-    String url = "/api/v1/";
-    url += config["config2"]["TB_TOKEN"].as<String>();
-    url += "/attributes";
-    
-    JsonDocument configDoc;
-    if (!config["main"].isNull()) {
-        configDoc["config_date"] = config["main"];
-    }
-    JsonDocument configInfo;
-    if (!config["main"]["label"].isNull()) {
-        configInfo["label"] = config["main"]["label"];
-    }
-    if (!config["main"]["version"].isNull()) {
-        configInfo["version"] = config["main"]["version"];
-    }
-    configDoc["config_info"] = configInfo;
-    String data;
-    serializeJson(configDoc, data);
-    LOG_DEBUGLN("HttpSend: Config attributes JSON: %s", data.c_str());
-    
-    String headers = "Content-Type: application/json\r\n";
-    m_httpClient.begin();
-    HttpResponse response = m_httpClient.POST_JSON(
-        config["config2"]["TB_HOST"].as<const char *>(),
-        config["config2"]["TB_PORT"].as<int>(),
-        url,
-        data,
-        headers);
-    
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-        LOG_INFOLN("HttpSend: Config attributes sent successfully to ThingsBoard");
-        ret = true;
-    } else {
-        LOG_ERRORLN("HttpSend: Config attributes send failed, HTTP status: %d", response.statusCode);
-    }
-    return ret;
-}
-
-/**
 * Отправка телеметрии в ThingsBoard
 */
 bool MyHttpSend::sendParamTB() {
-    bool ret = false;
     
     String url = "/api/v1/";
     url += config["config2"]["TB_TOKEN"].as<String>();
@@ -693,18 +651,17 @@ bool MyHttpSend::sendParamTB() {
     serializeJson(jsonData, data);
     String headers = "Content-Type: application/json\r\n";
     
-    m_httpClient.begin();
-    HttpResponse response = m_httpClient.POST_JSON(
+    bool ret = m_httpClient.POST_JSON(
         config["config2"]["TB_HOST"].as<const char *>(),
         config["config2"]["TB_PORT"].as<int>(),
         url,
         data,
         headers);
     
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (ret && m_httpClient.m_response.statusCode >= 200 && m_httpClient.m_response.statusCode < 300) {
         LOG_INFOLN("HttpSend: ThingsBoard telemetry sent successfully");
         JsonDocument respDoc;
-        DeserializationError error = deserializeJson(respDoc, response.body);
+        DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
         if (!error && respDoc["status"].as<String>() == "SUCCESS") {
             config["config2"]["TB_TOKEN"] = respDoc["credentialsValue"].as<String>();
             configWrite();
@@ -712,7 +669,7 @@ bool MyHttpSend::sendParamTB() {
         }
         ret = true;
     } else {
-        LOG_ERRORLN("HttpSend: ThingsBoard telemetry send failed, HTTP status: %d", response.statusCode);
+        LOG_ERRORLN("HttpSend: ThingsBoard telemetry send failed, HTTP status: %d", m_httpClient.m_response.statusCode);
     }
     return ret;
 }
@@ -721,7 +678,6 @@ bool MyHttpSend::sendParamTB() {
 * Авторизация устройства в ThingsBoard
 */
 bool MyHttpSend::authTB(const char *key, const char *secret) {
-    bool ret = false;
     if (!config["config2"]["TB_TOKEN"].isNull() && config["config2"]["TB_TOKEN"] != "") {
        return true;    
     }
@@ -740,17 +696,17 @@ bool MyHttpSend::authTB(const char *key, const char *secret) {
         url.c_str());
         
     m_httpClient.begin();
-    HttpResponse response = m_httpClient.POST_JSON(
+    bool ret = m_httpClient.POST_JSON(
         config["config2"]["TB_HOST"].as<const char *>(),
         config["config2"]["TB_PORT"].as<int>(),
         url,
         data,
         headers);
         
-    LOG_DEBUGLN("HttpSend: ThingsBoard auth response status: %d", response.statusCode);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    LOG_INFOLN("HttpSend: ThingsBoard auth response status: %d %s", m_httpClient.m_response.statusCode, m_httpClient.m_response.body.c_str());
+    if (m_httpClient.m_response.statusCode >= 200 && m_httpClient.m_response.statusCode < 300) {
         JsonDocument respDoc;
-        DeserializationError error = deserializeJson(respDoc, response.body);
+        DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
         if (!error && respDoc["status"].as<String>() == "SUCCESS") {
             String token = respDoc["credentialsValue"].as<String>();
             LOG_DEBUGLN("HttpSend: ThingsBoard token obtained: %s", token.c_str());
@@ -765,7 +721,7 @@ bool MyHttpSend::authTB(const char *key, const char *secret) {
             LOG_ERRORLN("HttpSend: ThingsBoard auth response parse error or not SUCCESS");
         }
     } else {
-        LOG_ERRORLN("HttpSend: ThingsBoard auth failed, HTTP status: %d", response.statusCode);
+        LOG_ERRORLN("HttpSend: ThingsBoard auth failed, HTTP status: %d", m_httpClient.m_response.statusCode);
     }
     return ret;
 }
@@ -774,7 +730,6 @@ bool MyHttpSend::authTB(const char *key, const char *secret) {
 * Отправка атрибутов устройства в ThingsBoard
 */
 bool MyHttpSend::sendAttributeTB() {
-    bool ret = false;
     bool is_over_gate = config["config2"]["TB"]["GATEWAY"].as<bool>();
     if (!is_over_gate) {
         if (config["config2"]["TB_TOKEN"].isNull() ||
@@ -785,34 +740,32 @@ bool MyHttpSend::sendAttributeTB() {
         }
     }
     String url = "/api/v1/";
-    if (is_over_gate) {
-        url += strID;
-    } else {
-        url += config["config2"]["TB_TOKEN"].as<String>();
-    }
+    url += config["config2"]["TB_TOKEN"].as<String>();
     url += "/attributes?clientKeys";
     jsonData.clear();
-    jsonData["SerialNo"] = serNo;
-    jsonData["DogovorNo"] = config["config2"]["N_DOGIVOR"].as<String>();
-    jsonData["BoxNo"] = config["config2"]["N_BOX"].as<String>();
+    jsonData["SerialNo"]   = serNo;
+    jsonData["DogovorNo"]  = config["config2"]["N_DOGIVOR"].as<String>();
+    jsonData["BoxNo"]      = config["config2"]["N_BOX"].as<String>();
+    jsonData["Config"]     = config;
+    jsonData["ConfigUUID"] = configUUID;
     String data;
     serializeJson(jsonData, data);
     String headers = "Content-Type: application/json\r\n";
     LOG_DEBUGLN("HttpSend: Sending attributes to ThingsBoard...");
     
     m_httpClient.begin();
-    HttpResponse response = m_httpClient.POST_JSON(
+    bool ret = m_httpClient.POST_JSON(
         config["config2"]["TB_HOST"].as<const char *>(),
         config["config2"]["TB_PORT"].as<int>(),
         url,
         data,
         headers);
         
-    if (response.statusCode >= 200 && response.statusCode < 300) {
+    if (ret && m_httpClient.m_response.statusCode >= 200 && m_httpClient.m_response.statusCode < 300) {
         LOG_INFOLN("HttpSend: ThingsBoard attributes sent successfully");
         ret = true;
     } else {
-        LOG_ERRORLN("HttpSend: ThingsBoard attributes send failed, HTTP status: %d", response.statusCode);
+        LOG_ERRORLN("HttpSend: ThingsBoard attributes send failed, HTTP status: %d", m_httpClient.m_response.statusCode);
     }
     return ret;
 }
@@ -881,17 +834,16 @@ bool MyHttpSend::fetchConfigFromTB() {
     LOG_DEBUGLN("HttpSend: Fetching config from: %s:%d%s", 
         tbHost.c_str(), tbPort, url.c_str());
     
-    m_httpClient.begin();
-    HttpResponse response = m_httpClient.GET(tbHost.c_str(), tbPort, url);
+    bool ret = m_httpClient.GET(tbHost.c_str(), tbPort, url);
     
-    if (response.statusCode != 200) {
+    if (ret && m_httpClient.m_response.statusCode != 200) {
         LOG_ERRORLN("HttpSend: Failed to fetch config, HTTP status: %d", 
-            response.statusCode);
+            m_httpClient.m_response.statusCode);
         return false;
     }
     
     JsonDocument respDoc;
-    DeserializationError error = deserializeJson(respDoc, response.body);
+    DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
     if (error) {
         LOG_ERRORLN("HttpSend: Failed to parse config response: %s", 
             error.c_str());
@@ -922,138 +874,113 @@ bool MyHttpSend::fetchConfigFromTB() {
 //*********************************************************************************************************************
 
 /**
-* Проверяет наличие новой версии прошивки на сервере ThingsBoard
+* Проверяет наличие новой версии прошивки, HTTPD и конфигурации на сервере ThingsBoard
 */
-bool MyHttpSend::checkFirmwareVersionTB() {
+bool MyHttpSend::checkUpdateTB(bool _flagSendAttributeTB) {
    uint32_t currentTime = millis();
-   LOG_INFOLN("HttpSend: Checking firmware version from server...");
    
+
    String url = "/api/v1/";
    url += config["config2"]["TB_TOKEN"].as<String>();
-   url += "/attributes?sharedKeys=fw_title,fw_version,fw_checksum";
+   url += "/attributes?clientKeys=ConfigUUID&sharedKeys=fw_version,sw_version";
    String tbHost = config["config2"]["TB_HOST"].as<String>();
    int tbPort = config["config2"]["TB_PORT"].as<int>();
-   LOG_DEBUGLN("HttpSend: Fetching firmware version from: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
+   LOG_INFOLN("HttpSend: Check Update: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
    
-   m_httpClient.begin();
-   HttpResponse response = m_httpClient.GET(tbHost.c_str(), tbPort, url);
-   
-   if (response.statusCode != 200) {
-      LOG_ERRORLN("HttpSend: Failed to fetch firmware version, HTTP status: %d",
-         response.statusCode);
-      return false;
-   }
-   
-   JsonDocument respDoc;
-   DeserializationError error = deserializeJson(respDoc, response.body);
-   LOG_DEBUGLN("BODY %s",response.body.c_str());
-   if (error) {
-      LOG_ERRORLN("HttpSend: Failed to parse firmware version response: %s",
-         error.c_str());
-      return false;
-   }
-   
-   if (respDoc["shared"].containsKey("fw_version")) {
-      String serverVersion    = respDoc["shared"]["fw_version"].as<String>();
-      String serverTitle      = respDoc["shared"]["fw_title"].as<String>();
-      String serverChecksum   = respDoc["shared"]["fw_checksum"].as<String>();
-
-      LOG_DEBUGLN("HttpSend: Server firmware %s %s", serverTitle.c_str(), serverVersion.c_str());
+   bool ret = m_httpClient.GET(tbHost.c_str(), tbPort, url);
+   ret = true;
+   if (ret && m_httpClient.m_response.statusCode == 200) {
+      JsonDocument respDoc;
+      DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
       
-      String currentVersion = FW_VERSION;
-      String currentTitle   = FW_NAME;
-      LOG_DEBUGLN("HttpSend: Current firmware %s %s", currentTitle.c_str(), currentVersion.c_str());
-      
-      if (serverVersion != currentVersion && currentTitle == serverTitle) {
+      String fwVersion     = respDoc["shared"]["fw_version"].as<String>();
+      String swVersion     = respDoc["shared"]["sw_version"].as<String>();
+      String serverUUID    = respDoc["client"]["ConfigUUID"].as<String>();
+      String httpdVersion  = httpd_version["version"].as<String>(); 
+//      LOG_INFOLN("UUID: %s %s",serverUUID.c_str(),configUUID.c_str());
+      if( fwVersion != FW_VERSION ){
          LOG_INFOLN("HttpSend: *** NEW FIRMWARE VERSION AVAILABLE ***");
-         LOG_INFOLN("HttpSend: new firmware %s %s", serverTitle.c_str(), serverVersion.c_str());
+         LOG_INFOLN("HttpSend: new firmware %s", fwVersion.c_str());
          HTTP_sendResponse(WebResponse::combine({
-            WebResponse::msg("Доступна новая версия прошивки: " + serverVersion, "info", 5000)
+            WebResponse::msg("Доступна новая версия прошивки: " + fwVersion +". Загружается обновление ...", "info", 5000)
          }));
-         updateFirmwareFromTB(serverTitle,serverVersion,serverChecksum);
-         return true;
-      } else {
-         LOG_DEBUGLN("HttpSend: Firmware version is up to date");
+         updateFirmwareFromTB();
+         return true;           
       }
-   } else {
-      LOG_DEBUGLN("HttpSend: No 'fw_version' attribute found on server");
+      else if(httpdVersion != swVersion){
+         LOG_INFOLN("HttpSend: *** NEW HTTPD VERSION AVAILABLE ***");
+         LOG_INFOLN("HttpSend: new HTTPD %s %s", swVersion.c_str());
+         HTTP_sendResponse(WebResponse::combine({
+            WebResponse::msg("Доступна новая версия HTTPD: " + swVersion + ". Загружается обновление ...", "info", 5000)
+         }));
+         updateHttpdTB();
+         return true;           
+      }
+      else if( _flagSendAttributeTB && serverUUID != configUUID ){
+         LOG_INFOLN("HttpSend: *** CONFIG REMOTE CHANGE ***");
+         HTTP_sendResponse(WebResponse::combine({
+            WebResponse::msg("Удаленно изменилась конфигурация. Страница перегрузится через 5 сек ", "info", 5000),
+            WebResponse::reload(5000)
+         }));
+         if (updateConfigTB() )configUUID = serverUUID; 
+         return true;           
+      }
+      else { // Прошивка не изменилась
+        return false;
+      }
    }
+   LOG_ERRORLN("HttpSend: Error Check %d, %s",m_httpClient.m_response.statusCode,m_httpClient.m_response.body.c_str());
    return false;
 }
 
-// Выполняет обновление прошивки с сервера ThingsBoard
-// Выполняет обновление прошивки с сервера ThingsBoard
-bool MyHttpSend::updateFirmwareFromTB(const String& fwTitle, const String& fwVersion, const String& fwChecksum) {
-    LOG_INFOLN("HttpSend: Starting firmware update from ThingsBoard...");
-    LOG_INFOLN("HttpSend: Firmware title: %s, version: %s", fwTitle.c_str(), fwVersion.c_str());
-    LOG_INFOLN("HttpSend: Expected SHA256 checksum: %s", fwChecksum.c_str());
-    
-    // Формируем URL для запроса прошивки
+
+
+
+
+/**
+* Обновляет прошивку с сервера  ThingsBoard
+*/
+bool MyHttpSend::updateFirmwareFromTB() {
     String url = "/api/v1/";
     url += config["config2"]["TB_TOKEN"].as<String>();
-    url += "/firmware?title=" + fwTitle + "&version=" + fwVersion;
-    
+    url += "/attributes?sharedKeys=fw_title,fw_version,fw_checksum";
     String tbHost = config["config2"]["TB_HOST"].as<String>();
     int tbPort = config["config2"]["TB_PORT"].as<int>();
-    LOG_DEBUGLN("HttpSend: Downloading firmware from: %s:%d%s", 
-        tbHost.c_str(), tbPort, url.c_str());
-    
-    // Используем WiFiClient напрямую для стриминговой загрузки
-    WiFiClient client;
-    if (!client.connect(tbHost.c_str(), tbPort)) {
-        LOG_ERRORLN("HttpSend: Failed to connect to ThingsBoard for firmware download");
-        return false;
+    LOG_INFOLN("HttpSend: Check Firmware: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
+   
+    bool ret = m_httpClient.GET(tbHost.c_str(), tbPort, url);
+
+    String fw_version    = "";
+    String fw_title      = "";
+    String fw_checksum   = "";
+
+    if (ret && m_httpClient.m_response.statusCode == 200) {
+       JsonDocument respDoc;
+       DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
+       fw_version    = respDoc["shared"]["fw_version"].as<String>();
+       fw_title      = respDoc["shared"]["fw_title"].as<String>();
+       fw_checksum   = respDoc["shared"]["fw_checksum"].as<String>();
     }
-    
-    // Отправляем GET запрос
-    client.printf(
-        "GET %s HTTP/1.1\r\n"
-        "Host: %s\r\n"
-        "Connection: close\r\n"
-        "\r\n",
-        url.c_str(),
-        tbHost.c_str()
-    );
-    
-    // Ожидаем ответ
-    unsigned long timeout = millis();
-    while (!client.available()) {
-        if (millis() - timeout > 10000) {
-            LOG_ERRORLN("HttpSend: Timeout waiting for firmware download response");
-            client.stop();
-            return false;
-        }
-        vTaskDelay(1);
+    else {
+       LOG_ERRORLN("HttpSend: Error firmware attributes");
+       return false;
     }
+    LOG_INFOLN("HttpSend: Starting firmware update from ThingsBoard...");
+    LOG_INFOLN("HttpSend: Firmware  version: %s", fw_title.c_str(), fw_version.c_str());
+    LOG_INFOLN("HttpSend: Expected SHA256 checksum: %s", fw_checksum.c_str());
+
+
+    // Формируем URL для запроса прошивки
+    url = "/api/v1/";
+    url += config["config2"]["TB_TOKEN"].as<String>();
+    url += "/firmware?title=" + fw_title + "&version=" + fw_version;
     
-    // Парсим статусную строку
-    String statusLine = client.readStringUntil('\n');
-    LOG_DEBUGLN("HttpSend: Response: %s", statusLine.c_str());
+    LOG_INFOLN("HttpSend: Downloading firmware from: %s:%d%s",tbHost.c_str(), tbPort, url.c_str());
+
+    ret = m_httpClient.GET_STREAM(tbHost.c_str(), tbPort, url,"",10000);
     
-    if (!statusLine.startsWith("HTTP/1.1 200")) {
-        LOG_ERRORLN("HttpSend: Firmware download failed, status: %s", statusLine.c_str());
-        client.stop();
-        return false;
-    }
-    
-    // Парсим заголовки
-    String line;
-    int contentLength = -1;
-    bool chunked = false;
-    
-    while ((line = client.readStringUntil('\n')) != "\r" && line != "\n") {
-        line.trim();
-        LOG_DEBUGLN("HttpSend: Header: %s", line.c_str());
-        
-        if (line.startsWith("Content-Length:")) {
-            contentLength = line.substring(line.indexOf(':') + 1).toInt();
-        } else if (line.startsWith("Transfer-Encoding:") && line.indexOf("chunked") >= 0) {
-            chunked = true;
-        }
-    }
-    
-    LOG_INFOLN("HttpSend: Starting firmware update, content-length: %d, chunked: %d", 
-        contentLength, chunked);
+     
+//    LOG_INFOLN("HttpSend: Starting firmware update, content-length: %d",contentLength);
     
     // Инициализация SHA256 контекста
     mbedtls_sha256_context shaCtx;
@@ -1065,7 +992,7 @@ bool MyHttpSend::updateFirmwareFromTB(const String& fwTitle, const String& fwVer
         LOG_ERRORLN("HttpSend: Failed to begin firmware update");
         Update.printError(Serial);
         mbedtls_sha256_free(&shaCtx);
-        client.stop();
+        m_httpClient.stop();
         return false;
     }
     
@@ -1075,34 +1002,27 @@ bool MyHttpSend::updateFirmwareFromTB(const String& fwTitle, const String& fwVer
     size_t totalBytes = 0;
     bool updateSuccess = false;
     
-    if (chunked) {
-        Update.abort();
-        LOG_ERRORLN("HttpSend: Chunk method not support");
-        return false;
-
-    } else {
-        // Обработка обычного ответа с Content-Length
-        uint8_t buffer[512];
-        int bytesRead;
+    // Обработка обычного ответа с Content-Length
+    uint8_t buffer[512];
+    int bytesRead;
         
-        while ((bytesRead = client.readBytes(buffer, sizeof(buffer))) > 0) {
-            // Обновляем SHA256 хеш
-            mbedtls_sha256_update(&shaCtx, buffer, bytesRead);
+    while ((bytesRead = m_httpClient.m_client.readBytes(buffer, sizeof(buffer))) > 0) {
+       // Обновляем SHA256 хеш
+        mbedtls_sha256_update(&shaCtx, buffer, bytesRead);
             
-            if (Update.write(buffer, bytesRead) != bytesRead) {
-                LOG_ERRORLN("HttpSend: Update write error");
-                Update.printError(Serial);
-                mbedtls_sha256_free(&shaCtx);
-                Update.abort();
-                client.stop();
-                return false;
-            }
-            totalBytes += bytesRead;
-            LOG_DEBUGLN("HttpSend: Written %d bytes, total: %d", bytesRead, totalBytes);
+        if (Update.write(buffer, bytesRead) != bytesRead) {
+            LOG_ERRORLN("HttpSend: Update write error");
+            Update.printError(Serial);
+            mbedtls_sha256_free(&shaCtx);
+            Update.abort();
+            m_httpClient.stop();
+            return false;
         }
+        totalBytes += bytesRead;
+        LOG_DEBUGLN("HttpSend: Written %d bytes, total: %d", bytesRead, totalBytes);
     }
     
-    client.stop();
+    m_httpClient.stop();
     
     // Завершаем вычисление SHA256
     uint8_t hash[32];
@@ -1121,9 +1041,9 @@ bool MyHttpSend::updateFirmwareFromTB(const String& fwTitle, const String& fwVer
     LOG_INFOLN("HttpSend: Calculated SHA256: %s", calculatedChecksum.c_str());
     
     // Проверяем SHA256 сумму
-    if (!fwChecksum.isEmpty() && fwChecksum != calculatedChecksum) {
+    if (!fw_checksum.isEmpty() && fw_checksum != calculatedChecksum) {
         LOG_ERRORLN("HttpSend: SHA256 checksum mismatch!");
-        LOG_ERRORLN("HttpSend: Expected: %s", fwChecksum.c_str());
+        LOG_ERRORLN("HttpSend: Expected: %s", fw_checksum.c_str());
         LOG_ERRORLN("HttpSend: Got:      %s", calculatedChecksum.c_str());
         Update.abort();
         return false;
@@ -1154,80 +1074,6 @@ bool MyHttpSend::updateFirmwareFromTB(const String& fwTitle, const String& fwVer
     
     return updateSuccess;
 }
-//*********************************************************************************************************************
-// Проверка версии веб-интерфейса
-//*********************************************************************************************************************
-
-/**
-* Проверка версии веб-интерфейса на сервере ThingsBoard
-*/
-bool MyHttpSend::checkHttpdVersionTB() {
-   LOG_INFOLN("HttpSend: Checking httpd_version from server...");
-   if (config["config2"]["TB_TOKEN"].isNull() || config["config2"]["TB_TOKEN"].as<String>().isEmpty()) {
-      LOG_ERRORLN("HttpSend: TB_TOKEN not configured");
-      return true;
-   }
-   String url = "/api/v1/";
-   url += config["config2"]["TB_TOKEN"].as<String>();
-   url += "/attributes?clientKeys=httpd_version";
-   String tbHost = config["config2"]["TB_HOST"].as<String>();
-   int tbPort = config["config2"]["TB_PORT"].as<int>();
-   LOG_DEBUGLN("HttpSend: Fetching httpd_version from: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
-   
-   m_httpClient.begin();
-   HttpResponse response = m_httpClient.GET(tbHost.c_str(), tbPort, url);
-   
-   if (response.statusCode != 200) {
-      LOG_ERRORLN("HttpSend: Failed to fetch httpd_version, HTTP status: %d", response.statusCode);
-      return false;
-   }
-   JsonDocument respDoc;
-   DeserializationError error = deserializeJson(respDoc, response.body);
-   if (error) {
-      LOG_ERRORLN("HttpSend: Failed to parse httpd_version response: %s", error.c_str());
-      return false;
-   }
-   String serverVersion  = "";
-//   String serverChecksum = "";
-   if (respDoc.containsKey("client") && respDoc["client"].containsKey("httpd_version")) {
-      serverVersion  = respDoc["client"]["httpd_version"].as<String>();
-//      serverChecksum = respDoc["client"]["httpd_checksum"].as<String>();
-   } else {
-      LOG_DEBUGLN("HttpSend: httpd_version attribute not found on server");
-      return false;
-   }
-   LOG_INFOLN("HttpSend: Server httpd_version: %s", serverVersion.c_str());
-   String versionFilePath = m_httpdPath + "/version.json";
-   if (!LittleFS.exists(versionFilePath)) {
-      LOG_DEBUGLN("HttpSend: version.json not found at: %s", versionFilePath.c_str());
-      return true;
-   }
-   File versionFile = LittleFS.open(versionFilePath, FILE_READ);
-   if (!versionFile) {
-      LOG_ERRORLN("HttpSend: Failed to open version.json: %s", versionFilePath.c_str());
-      return true;
-   }
-   String content = versionFile.readString();
-   versionFile.close();
-   JsonDocument localDoc;
-   DeserializationError localError = deserializeJson(localDoc, content);
-   if (localError) {
-      LOG_ERRORLN("HttpSend: Failed to parse version.json: %s", localError.c_str());
-      return true;
-   }
-   if (!localDoc.containsKey("version")) {
-      LOG_ERRORLN("HttpSend: version.json does not contain 'version' field");
-      return true;
-   }
-   String localVersion = localDoc["version"].as<String>();
-   LOG_INFOLN("HttpSend: Local httpd version: %s", localVersion.c_str());
-   if (localVersion != serverVersion) {
-      LOG_INFOLN("HttpSend: httpd_version mismatch: local='%s', server='%s'",  localVersion.c_str(), serverVersion.c_str());
-      return true;
-   }
-   LOG_INFOLN("HttpSend: httpd_version matches: %s", localVersion.c_str());
-   return false;
-}
 
 
 
@@ -1236,6 +1082,7 @@ bool MyHttpSend::checkHttpdVersionTB() {
 * Возвращает true при успешной распаковке, false при ошибке
 */
 bool MyHttpSend::extractTar(const String& tarPath, const String& destPath) {
+
     LOG_INFOLN("HttpSend: Extracting TAR archive: %s to %s", tarPath.c_str(), destPath.c_str());
     
     // Проверяем существование архива
@@ -1268,125 +1115,57 @@ bool MyHttpSend::extractTar(const String& tarPath, const String& destPath) {
     return success;
 }
 
+/**
+* Скачиваение с TB сервера и обновление каталога HTTPD
+*/
 bool MyHttpSend::updateHttpdTB() {
-   //******************************************************************************************************************
-   // Блок 1: Получение httpd_checksum
-   //******************************************************************************************************************
-   LOG_INFOLN("HttpSend: Starting web interface update from ThingsBoard...");
-   if (config["config2"]["TB_TOKEN"].isNull() || config["config2"]["TB_TOKEN"].as<String>().isEmpty()) {
-      LOG_ERRORLN("HttpSend: TB_TOKEN not configured");
+   String url = "";
+   url = "/api/v1/";
+   url += config["config2"]["TB_TOKEN"].as<String>();
+   url += "/attributes?sharedKeys=sw_title,sw_version,sw_checksum";
+   String tbHost = config["config2"]["TB_HOST"].as<String>();
+   int tbPort = config["config2"]["TB_PORT"].as<int>();
+   LOG_INFOLN("Update HTTP: Check HTTPD: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
+   String sw_version    = "";
+   String sw_title      = "";
+   String sw_checksum   = "";
+  
+   bool ret = m_httpClient.GET(tbHost.c_str(), tbPort, url);
+   if (ret && m_httpClient.m_response.statusCode == 200) {
+      JsonDocument respDoc;
+      DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
+      sw_version    = respDoc["shared"]["sw_version"].as<String>();
+      sw_title      = respDoc["shared"]["sw_title"].as<String>();
+      sw_checksum   = respDoc["shared"]["sw_checksum"].as<String>();
+   }
+   else {
+      LOG_ERRORLN("Update HTTP: Error HTTPD attributes");
       return false;
    }
 
-    HTTP_sendResponse(WebResponse::combine({
-         WebResponse::msg("Найдена новая версия HTTPD", "info", 5000)
-    }));
-  
-   // Получаем checksum
-   String url = "/api/v1/";
-   url += config["config2"]["TB_TOKEN"].as<String>();
-   url += "/attributes?clientKeys=httpd_checksum";
-   String tbHost = config["config2"]["TB_HOST"].as<String>();
-   int tbPort = config["config2"]["TB_PORT"].as<int>();
-   LOG_DEBUGLN("HttpSend: Fetching httpd_checksum from: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
-   
-   m_httpClient.begin();
-   HttpResponse response = m_httpClient.GET(tbHost.c_str(), tbPort, url);
-   if (response.statusCode != 200) {
-      LOG_ERRORLN("HttpSend: Failed to fetch httpd_checksum, HTTP status: %d", response.statusCode);
-      return false;
-   }
-   JsonDocument respDoc;
-   DeserializationError error = deserializeJson(respDoc, response.body);
-   if (error) {
-      LOG_ERRORLN("HttpSend: Failed to parse httpd_checksum response: %s", error.c_str());
-      return false;
-   }
-   if (!respDoc.containsKey("client") || !respDoc["client"].containsKey("httpd_checksum")) {
-      LOG_ERRORLN("HttpSend: httpd_checksum attribute not found in response");
-      return false;
-   }
-   String httpdChecksum = respDoc["client"]["httpd_checksum"].as<String>();
-   LOG_INFOLN("HttpSend: Expected SHA256 checksum: %s", httpdChecksum.c_str());
-   
-   //******************************************************************************************************************
-   // Блок 2: Открытие GET_STREAM к httpd_data (только без chunk)
-   //******************************************************************************************************************
+   LOG_INFOLN("Update HTTP: Starting HTTPD update from ThingsBoard...");
+   LOG_INFOLN("Update HTTP: HTTPD title: %s, version: %s", sw_title.c_str(), sw_version.c_str());
+   LOG_INFOLN("Update HTTP: Expected SHA256 checksum: %s", sw_checksum.c_str());
+
+
+    // Формируем URL для запроса прошивки
    url = "/api/v1/";
    url += config["config2"]["TB_TOKEN"].as<String>();
-   url += "/attributes?clientKeys=httpd_data";
-   LOG_DEBUGLN("HttpSend: Fetching httpd_data from: %s:%d%s", tbHost.c_str(), tbPort, url.c_str());
-   
-   bool isChunked = false;
-   m_httpClient.begin();
-   response = m_httpClient.GET_STREAM(tbHost.c_str(), tbPort, url, "", &isChunked);
-   if (response.statusCode != 200) {
-      LOG_ERRORLN("HttpSend: HTTP error, status: %d", response.statusCode);
-      return false;
-   }
-   LOG_DEBUGLN("HttpSend: Response status: %d, chunked: %d", response.statusCode, isChunked);
-   if (isChunked) {
-      LOG_ERRORLN("HttpSend: Chunked transfer encoding is not supported");
-      m_httpClient.stop();
-      return false;
-   }
-   
-   //******************************************************************************************************************
-   // Блок 3: Создание WiFiClient для прямого чтения данных
-   //******************************************************************************************************************
-   WiFiClient client;
-   if (!client.connect(tbHost.c_str(), tbPort)) {
-      LOG_ERRORLN("HttpSend: Failed to connect to ThingsBoard for streaming");
-      return false;
-   }
-   
-   // Отправляем GET запрос
-   client.printf(
-      "GET %s HTTP/1.1\r\n"
-      "Host: %s\r\n"
-      "Connection: close\r\n"
-      "\r\n",
-      url.c_str(),
-      tbHost.c_str()
-   );
-   
-   // Ожидаем ответ
-   unsigned long timeout = millis();
-   while (!client.available()) {
-      if (millis() - timeout > 10000) {
-         LOG_ERRORLN("HttpSend: Timeout waiting for response");
-         client.stop();
-         return false;
-      }
-      vTaskDelay(1);
-   }
-   
-   // Парсим статусную строку
-   String statusLine = client.readStringUntil('\n');
-   LOG_DEBUGLN("HttpSend: Status: %s", statusLine.c_str());
-   if (!statusLine.startsWith("HTTP/1.1 200")) {
-      LOG_ERRORLN("HttpSend: HTTP error: %s", statusLine.c_str());
-      client.stop();
-      return false;
-   }
-   
-   // Парсим заголовки
-   String line;
-   bool chunked = false;
-   while ((line = client.readStringUntil('\n')) != "\r" && line != "\n") {
-      line.trim();
-      LOG_DEBUGLN("HttpSend: Header: %s", line.c_str());
-      if (line.startsWith("Transfer-Encoding:") && line.indexOf("chunked") >= 0) {
-         chunked = true;
-      }
-   }
-   
-   if (chunked) {
-      LOG_ERRORLN("HttpSend: Chunked transfer encoding is not supported");
-      client.stop();
-      return false;
-   }
-   
+   url += "/software?title=" + sw_title + "&version=" + sw_version;
+    
+   LOG_INFOLN("Update HTTP: Downloading HTTPD from: %s:%d%s",tbHost.c_str(), tbPort, url.c_str());
+
+   ret = m_httpClient.GET_STREAM(tbHost.c_str(), tbPort, url,"",10000);
+    
+   if( !ret ){
+       LOG_ERRORLN("Update HTTP: Error Download File");
+       return false;
+   } 
+    
+   String lenStr = m_httpClient.getHeaderValue("Content-Length");
+   int contentLength = lenStr.toInt();
+   LOG_INFOLN("Update HTTP: Content-Length: %s (%d)", lenStr.c_str(), contentLength);
+
    //******************************************************************************************************************
    // Блок 4: Подготовка временного файла и SHA256 контекста
    //******************************************************************************************************************
@@ -1396,158 +1175,84 @@ bool MyHttpSend::updateHttpdTB() {
    }
    File tempFile = LittleFS.open(tempTarPath, FILE_WRITE);
    if (!tempFile) {
-      LOG_ERRORLN("HttpSend: Failed to create temporary file: %s", tempTarPath.c_str());
-      client.stop();
+      LOG_ERRORLN("Update HTTP: Failed to create temporary file: %s", tempTarPath.c_str());
+      m_httpClient.stop();
       return false;
    }
    mbedtls_sha256_context shaCtx;
    mbedtls_sha256_init(&shaCtx);
    mbedtls_sha256_starts(&shaCtx, 0);
-   bool inBase64 = false;
-   int quoteCount = 0;
-   uint8_t decodeBuffer[4];  
-   uint8_t outBuffer[3];
-   int decodePos = 0;
-   size_t totalDecoded = 0;
    size_t totalBytesRead = 0;
    int bytesRead = 0;
-   bool foundClosingQuote = false;
    uint8_t readBuffer[512];
-   
-   //******************************************************************************************************************
-   // Блок 5: Пропуск символов до пятой кавычки и потоковое декодирование Base64
-   //******************************************************************************************************************
-   LOG_INFOLN("HttpSend: Starting streaming Base64 decode...");
-   while ((bytesRead = client.readBytes(readBuffer, sizeof(readBuffer))) > 0) {
-      totalBytesRead += bytesRead;
-      LOG_DEBUGLN("HttpSend: Read %d bytes, total: %u", bytesRead, totalBytesRead);
-      
-      // Обрабатываем каждый байт
-      for (int i = 0; i < bytesRead; i++) {
-         char c = (char)readBuffer[i];
-         
-         // Пропускаем символы до пятой кавычки
-         if (!inBase64) {
-            if (c == '"') {
-               quoteCount++;
-               if (quoteCount == 5) {
-                  inBase64 = true;
-                  LOG_DEBUGLN("HttpSend: Found 5th quote at byte %u, starting Base64 decode", totalBytesRead);
-               }
-            }
-            continue;
-         }
-         
-         // Проверяем завершающую кавычку
-         if (c == '"') {
-            // Обрабатываем остаток в буфере перед закрывающей кавычкой
-            if (decodePos > 0) {
-               // Дополняем padding если нужно
-               while (decodePos < 4) {
-                  decodeBuffer[decodePos++] = 64; // значение для '='
-               }
-               
-               int validBytes = 3;
-               if (decodeBuffer[3] == 64) validBytes = 2;
-               if (decodeBuffer[2] == 64) validBytes = 1;
-               
-               outBuffer[0] = (decodeBuffer[0] << 2) | (decodeBuffer[1] >> 4);
-               outBuffer[1] = (decodeBuffer[1] << 4) | (decodeBuffer[2] >> 2);
-               outBuffer[2] = (decodeBuffer[2] << 6) | decodeBuffer[3];
-               
-               if (validBytes > 0) {
-                  tempFile.write(outBuffer, validBytes);
-                  mbedtls_sha256_update(&shaCtx, outBuffer, validBytes);
-                  totalDecoded += validBytes;
-               }
-            }
-            
-            foundClosingQuote = true;
-            LOG_INFOLN("HttpSend: Found closing quote at byte %u, Base64 decode completed", totalBytesRead);
-            LOG_INFOLN("HttpSend: Total bytes read: %u, decoded: %u", totalBytesRead, totalDecoded);
-            break;
-         }
-         
-         // Декодируем Base64 символ
-         int value = -1;
-         if (c >= 'A' && c <= 'Z') {
-            value = c - 'A';
-         } else if (c >= 'a' && c <= 'z') {
-            value = c - 'a' + 26;
-         } else if (c >= '0' && c <= '9') {
-            value = c - '0' + 52;
-         } else if (c == '+') {
-            value = 62;
-         } else if (c == '/') {
-            value = 63;
-         } else if (c == '=') {
-            value = 64; // padding символ
-         } else {
-            continue; // пропускаем пробелы, переносы строк и др.
-         }
-         
-         decodeBuffer[decodePos++] = value;
-         
-         if (decodePos == 4) {
-            int validBytes = 3;
-            if (decodeBuffer[3] == 64) validBytes = 2;
-            if (decodeBuffer[2] == 64) validBytes = 1;
-            
-            outBuffer[0] = (decodeBuffer[0] << 2) | (decodeBuffer[1] >> 4);
-            outBuffer[1] = (decodeBuffer[1] << 4) | (decodeBuffer[2] >> 2);
-            outBuffer[2] = (decodeBuffer[2] << 6) | decodeBuffer[3];
-            
-            tempFile.write(outBuffer, validBytes);
-            mbedtls_sha256_update(&shaCtx, outBuffer, validBytes);
-            totalDecoded += validBytes;
-            decodePos = 0;
-         }
+
+   uint32_t startTime = millis();
+
+   while (true) {
+      if (millis() - startTime > DOWNLOAD_TIMEOUT) {
+         LOG_ERRORLN("Update HTTP: Download timeout after %u ms, received %u bytes", DOWNLOAD_TIMEOUT, totalBytesRead);
+         tempFile.close();
+         LittleFS.remove(tempTarPath);
+         m_httpClient.stop();
+         return false;
+       }
+
+      bytesRead = m_httpClient.m_client.readBytes(readBuffer, sizeof(readBuffer));
+      if (bytesRead > 0) {
+         tempFile.write(readBuffer, bytesRead);
+         mbedtls_sha256_update(&shaCtx, readBuffer, bytesRead);
+         totalBytesRead += bytesRead;
       }
-      
-      if (foundClosingQuote) {
+
+      if (contentLength > 0 && totalBytesRead >= (size_t)contentLength) {
          break;
       }
-   }
-   
-   //******************************************************************************************************************
-   // Блок 6: Проверка SHA256
-   //******************************************************************************************************************
-   client.stop();
+
+      if (bytesRead == 0) {
+         if (!m_httpClient.m_client.connected()) {
+            break;
+         }
+        vTaskDelay(1);
+      }
+  }
+
+//   while ((bytesRead = m_httpClient.m_client.readBytes(readBuffer, sizeof(readBuffer))) > 0) {
+//      totalBytesRead += bytesRead;
+//      LOG_INFOLN("Update HTTP: Read %d bytes, total: %u", bytesRead, totalBytesRead);
+//      mbedtls_sha256_update(&shaCtx, readBuffer, bytesRead);
+//      tempFile.write(readBuffer, bytesRead);
+//   }
+   m_httpClient.stop();
    tempFile.close();
 
-   if (!foundClosingQuote) {
-      LOG_ERRORLN("HttpSend: Closing quote not found after reading %u bytes", totalBytesRead);
-      LittleFS.remove(tempTarPath);
-      mbedtls_sha256_free(&shaCtx);
-      return false;
-   }
    
-   uint8_t hash[32];
-   mbedtls_sha256_finish(&shaCtx, hash);
-   mbedtls_sha256_free(&shaCtx);
+  // Завершаем вычисление SHA256
+    uint8_t hash[32];
+    mbedtls_sha256_finish(&shaCtx, hash);
+    mbedtls_sha256_free(&shaCtx);
+    
+    // Конвертируем хеш в hex строку
+    char hexStr[65];
+    for (int i = 0; i < 32; i++) {
+        sprintf(hexStr + i * 2, "%02x", hash[i]);
+    }
+    hexStr[64] = '\0';
+    String calculatedChecksum = String(hexStr);
+    
+    LOG_INFOLN("Update HTTP: Downloaded %d bytes of HTTPD", totalBytesRead);
+    LOG_INFOLN("Update HTTP: Calculated SHA256: %s", calculatedChecksum.c_str());
+    
+    // Проверяем SHA256 сумму
+    if (!sw_checksum.isEmpty() && sw_checksum != calculatedChecksum) {
+        LOG_ERRORLN("HttpSend: SHA256 checksum mismatch!");
+        LOG_ERRORLN("HttpSend: Expected: %s", sw_checksum.c_str());
+        LOG_ERRORLN("HttpSend: Got:      %s", calculatedChecksum.c_str());
+        LittleFS.remove(tempTarPath);
+        return false;
+    }
+    
+    LOG_INFOLN("HttpSend: SHA256 checksum verification successful");
    
-   char hexStr[65];
-   for (int i = 0; i < 32; i++) {
-      sprintf(hexStr + i * 2, "%02x", hash[i]);
-   }
-   hexStr[64] = '\0';
-   String calculatedChecksum = String(hexStr);
-   
-   LOG_INFOLN("HttpSend: Decoded file size: %u bytes", totalDecoded);
-   LOG_INFOLN("HttpSend: Calculated SHA256: %s", calculatedChecksum.c_str());
-   
-   if (calculatedChecksum != httpdChecksum) {
-      LOG_ERRORLN("HttpSend: SHA256 checksum mismatch!");
-      LOG_ERRORLN("HttpSend: Expected: %s", httpdChecksum.c_str());
-      LOG_ERRORLN("HttpSend: Got:      %s", calculatedChecksum.c_str());
-      LittleFS.remove(tempTarPath);
-      return false;
-   }
-   LOG_INFOLN("HttpSend: SHA256 checksum verification successful");
-   
-   //******************************************************************************************************************
-   // Блок 7: Распаковка TAR архива (удаление старого и создание нового внутри extractTar)
-   //******************************************************************************************************************
    String httpdPath = String(WEB_HTTPD_PATH);
    if (!extractTar(tempTarPath, "/")) {
       LOG_ERRORLN("HttpSend: Failed to extract TAR archive");
@@ -1555,10 +1260,8 @@ bool MyHttpSend::updateHttpdTB() {
       return false;
    }
    
-   //******************************************************************************************************************
-   // Блок 8: Очистка и завершение
-   //******************************************************************************************************************
    LittleFS.remove(tempTarPath);
+   readJson(WEB_VERSION_FILE, httpd_version);
    LOG_DEBUGLN("HttpSend: Removed temporary file: %s", tempTarPath.c_str());
    LOG_INFOLN("HttpSend: Web interface updated successfully");
    HTTP_sendResponse(WebResponse::combine({
@@ -1567,4 +1270,41 @@ bool MyHttpSend::updateHttpdTB() {
    }));
 
    return true;
+}
+
+/**
+* Обновление текущей конфигурации через TB
+*/
+bool MyHttpSend::updateConfigTB(){
+    String url = "";
+    url = "/api/v1/";
+    url += config["config2"]["TB_TOKEN"].as<String>();
+    url += "/attributes?clientKeys=Config";
+    String tbHost = config["config2"]["TB_HOST"].as<String>();
+    int tbPort = config["config2"]["TB_PORT"].as<int>();
+    LOG_INFOLN("HttpSend: Get New Config");
+  
+    bool ret = m_httpClient.GET(tbHost.c_str(), tbPort, url);
+//    LOG_INFOLN("HttpSend: attribures: %d %s", m_httpClient.m_response.statusCode,m_httpClient.m_response.body.c_str());
+
+    if (ret && m_httpClient.m_response.statusCode == 200) {
+       JsonDocument respDoc;
+       DeserializationError error = deserializeJson(respDoc, m_httpClient.m_response.body);
+       if (error){
+          LOG_DEBUG("HttpSend: Error Json Config");
+          return false;
+       } 
+       config.clear();
+       config.set(respDoc["client"]["Config"]);
+       INFO_JSON_DOC_COMPACT("NEW_CONFIG", config);
+       configWrite();
+       LOG_INFOLN("HttpSend: Config Update");
+       return true;
+    }
+    else {
+       LOG_ERRORLN("HttpSend: Error HTTPD attributes");
+       return false;
+    }
+
+
 }

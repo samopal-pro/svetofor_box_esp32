@@ -185,3 +185,60 @@ input[type=button].btn_play {
 }
 hr {border-top:1px solid #000088;}
 
+.wifi-container {
+    display: flex;
+/*    gap: 4px; */
+    align-items: center;
+    position: relative;
+    width: auto;
+    font-size: 10pt;    
+}
+
+.wifi-container input[type="text"] {
+    min-width: 0;
+}
+
+.wifi-dropdown {
+    position: absolute;
+    margin-top: 28px;
+    background: #ffffff;
+    border: 1px solid #000088;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+    min-width: 200px;
+}
+.wifi-item {
+    padding: 6px 10px;
+    color: #000088;
+    font-size: 12pt;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.wifi-item:last-child {
+    border-bottom: none;
+}
+.wifi-item:hover {
+    background: #e8e8ff;
+}
+.wifi-signal {
+    font-size: 10pt;
+    letter-spacing: -1px;
+}
+.wifi-scanning,
+.wifi-empty,
+.wifi-error {
+    padding: 10px;
+    color: #000088;
+    font-size: 11pt;
+    text-align: center;
+}
+.wifi-error {
+    color: #ff4040;
+}
+

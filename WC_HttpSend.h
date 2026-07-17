@@ -66,13 +66,16 @@ public:
     String calculateSHA256(const String& filePath);                  // Расчет SHA-256 файла
     String encodeBase64(const String& input);                        // Base64 кодирование
     String readOrCreateVersionFile();                                // Чтение/создание файла версии
-    void cleanupTempFiles();                                         // Очистка временных файлов
+    void cleanupTempFiles();          
+    
+    bool checkUpdateTB(bool _flagSendAttributeTB);                   // Проверка всех атрибутов
     bool checkFirmwareVersionTB();                                   // Проверка обновления версии прошивки
     bool checkHttpdVersionTB();                                      // Проверка версии веб-интерфейса на сервере
-    bool updateFirmwareFromTB(const String& fwTitle, const String& fwVersion, const String& fwChecksum); // Обновление прошивки
+    bool updateFirmwareFromTB();                                     // Обновление прошивки
     bool updateHttpdTB();                                            // Обновление веб-интерфейса с сервера
-    void stop();                                                     // Остановка HTTP клиента
-    
+    bool updateConfigTB();                                           //Обновление конфигурации
+    void stop();    
+                                                     // Остановка HTTP клиента
 private:
     void parseExcludeList(const String& excludeStr);
     void addFilesToTar(const String& dirPath, File& tarFile, const String& basePath);

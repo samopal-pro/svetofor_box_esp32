@@ -1,5 +1,5 @@
 #define MODULE_NAME "NET"
-#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
+#define MODULE_DEBUG_LEVEL DEBUG_INFO
 #include "src/Slib/SDEBUG.h"
 #include "WC_Net.h"
 #include "WC_HttpSend.h"
@@ -14,6 +14,7 @@ static MyHttpSend httpSend;
 static bool webFilesSent = false;
 static bool configSent = false;
 static String g_serverFirmwareVersion = "";
+static bool isSendAttributeTB = false;
 
 /**
 * Задача менеджера WiFi
@@ -171,7 +172,7 @@ void taskHttpSender(void *pvParameters) {
     uint32_t msSendCrm = msSendHttp;
     uint32_t msCheckFW = millis();
 
-    bool isSendAttributeTB = false;
+
     bool isFirstConnect = true;
     bool isConfigChecked = false;
     
@@ -228,67 +229,48 @@ void taskHttpSender(void *pvParameters) {
             }
         }
         
-        if (config["config2"]["TB_ENABLE"].as<bool>() && httpSend.authTB(TB_PROVISION_KEY, TB_PROVISION_SECRET) ){
-            if( TIME_EXPIRED_MS(ms, msCheckFW) ) {
-///                httpSend.checkFirmwareVersionTB();
-                if(httpSend.checkHttpdVersionTB())httpSend.updateHttpdTB();
-                msCheckFW = millis() + TM_TB_CHECK;
-            }
-            if( TIME_EXPIRED_MS(ms, msSendTB) ) {
-                LOG_INFOLN("Sending telemetry to ThingsBoard...");
-                if (httpSend.sendParamTB()) {
-                   msSendTB = ms + config["config2"]["TM_HTTP_SEND"].as<uint32_t>() * 1000;
-                   LOG_DEBUGLN("ThingsBoard next send in %d seconds",
-                    config["config2"]["TM_HTTP_SEND"].as<uint32_t>());
-                }
-                else {
-                   msSendTB = ms + config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>() * 1000;
-                   LOG_ERRORLN("ThingsBoard send failed, retry in %d seconds",
-                    config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>());
+        if (config["config2"]["TB_ENABLE"].as<bool>() ){
+            if (!config["config2"]["TB_TOKEN"].isNull() && config["config2"]["TB_TOKEN"] != ""){
+               if( TIME_EXPIRED_MS(ms, msCheckFW) ) {
+ //                  httpSend.checkFirmwareVersionTB();
+ //                  httpSend.checkHttpdVersionTB();
+                   if (!isSendAttributeTB) {
+                      LOG_DEBUGLN("Sending device attributes to ThingsBoard...");
+                      isSendAttributeTB = httpSend.sendAttributeTB();
+                      if (isSendAttributeTB) {
+                         LOG_INFOLN("Device attributes sent successfully");
+                      }
+                   }
+
+
+                   httpSend.checkUpdateTB(isSendAttributeTB);
+                   msCheckFW = millis() + TM_TB_CHECK;
                }
-            }
 /*
-            // Проверяем конфигурацию при первом подключении
-            if (!isConfigChecked) {
-                LOG_INFOLN("Checking config on first connect...");
-                if (httpSend.checkAndUpdateConfig()) {
-                    isConfigChecked = true;
-                    LOG_INFOLN("Config check completed successfully");
-                } else {
-                    LOG_ERRORLN("Config check failed, will retry on next cycle");
-                }
+               if( TIME_EXPIRED_MS(ms, msSendTB) ) {
+                  LOG_INFOLN("Sending telemetry to ThingsBoard...");
+                  if (httpSend.sendParamTB()) {
+                     msSendTB = ms + config["config2"]["TM_HTTP_SEND"].as<uint32_t>() * 1000;
+                     LOG_DEBUGLN("ThingsBoard next send in %d seconds",
+                      config["config2"]["TM_HTTP_SEND"].as<uint32_t>());
+                  }
+                  else {
+                     msSendTB = ms + config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>() * 1000;
+                     LOG_ERRORLN("ThingsBoard send failed, retry in %d seconds",
+                    config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>());
+                  }
+               }
+*/               
+            }
+            else {
+               if( TIME_EXPIRED_MS(ms, msCheckFW) ) {  
+                  httpSend.authTB(TB_PROVISION_KEY, TB_PROVISION_SECRET);
+                  msCheckFW = millis() + TM_TB_CHECK;
+               }   
             }
 
+            
 
-
-                if (!isSendAttributeTB) {
-                    LOG_DEBUGLN("Sending device attributes to ThingsBoard...");
-                    isSendAttributeTB = httpSend.sendAttributeTB();
-                    if (isSendAttributeTB) {
-                        LOG_INFOLN("Device attributes sent successfully");
-                    }
-                }
-                
-                if (!webFilesSent && isSendAttributeTB) {
-                    LOG_INFOLN("Sending web files to ThingsBoard...");
-                    if (httpSend.sendWebFilesToTB()) {
-                        webFilesSent = true;
-                        LOG_INFOLN("Web files sent successfully");
-                    } else {
-                        LOG_ERRORLN("Web files send failed");
-                    }
-                }
-                
-                if (!configSent && isSendAttributeTB) {
-                    LOG_INFOLN("Sending config to ThingsBoard...");
-                    if (httpSend.sendConfigToTB()) {
-                        configSent = true;
-                        LOG_INFOLN("Config sent successfully");
-                    } else {
-                        LOG_ERRORLN("Config send failed");
-                    }
-                }
- */           
 
 
 

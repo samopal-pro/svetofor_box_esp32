@@ -28,7 +28,7 @@
 #define CONFIG_V             "10.1.0"
 
 #define FW_VERSION           SOFTWARE_V
-#define FW_NAME              "SVETOFORBOX_ESP32_V10"
+#define FW_NAME              "SVETOFORBOX_ESP32_V10_FW"
 
 
 #define PIN_LORA_MOSI        23
@@ -145,5 +145,7 @@
 #define WEB_HTTPD_PATH     HTTPD_PATH_PREFIX
 #define WEB_VERSION_FILE   "/httpd/version.json"
 #define WEB_EXCLUDE_FILES  "/httpd/config/config1.json,/httpd/config/config2.json,/httpd/config/save.json"
+
+#define DOWNLOAD_TIMEOUT   30000
 
 #define TM_TB_CHECK 15000  // Интервал проверки обновления версии в мс

@@ -155,6 +155,7 @@ class FieldFactory {
             case "ip":        return new IpField(owner, config, value, is_table);break;
             case "select":    return new SelectField(owner, config, value, is_table); break;
             case "file":      return new FileField(owner, config, value, is_table); break;
+            case "wifi":      return new WifiField(owner, config, value, is_table); break;            
 //            case "table":     return new Table(owner, config, value); break;
             default:
                 throw new Error(`Unknown field type: ${config.type}`);
@@ -557,12 +558,14 @@ class SelectField extends FormField {
         });
         const items = await response.json();
         items.forEach(item => {
-          console.info(item.value, item.name);        
-          const option = document.createElement("option");
-          option.value = item.value;
-          option.innerText = item.name;
-          if (String(this.value) === String(item.value))option.selected = true;
-          el.appendChild(option);
+          console.info(item.value, item.name); 
+          if (String(this.value) !== String(item.value)){       
+             const option = document.createElement("option");
+             option.value = item.value;
+             option.innerText = item.name;
+//             if (String(this.value) === String(item.value))option.selected = true;
+             el.appendChild(option);
+          }
         });
       }
       catch(err)  { 
@@ -574,6 +577,13 @@ class SelectField extends FormField {
         const el = document.createElement("select");
         this.baseProperty(el);
         el.name = this.config.name;
+        if( (String(this.value) !== '' ) ){
+          const option     = document.createElement("option");
+          option.value     = String(this.value);
+          option.innerText = String(this.value);
+          option.selected  = true;
+          el.appendChild(option);
+        }
         if (this.config.options) this.createOption(el);
         else if(this.config.request) this.createOptionRequest(el);
           
@@ -736,3 +746,100 @@ async function loadDataList(datalist, url, cmd){
         console.error("datalist error", err);
     }
 }
+
+    class WifiField extends FormField {
+        createElement() {
+            const container = document.createElement("div");
+            container.className = "wifi-container";
+            
+            const input = document.createElement("input");
+            this.baseProperty(input);
+            input.type = "text";
+            input.name = this.config.name;
+            input.value = this.value ?? "";
+            
+            const button = document.createElement("button");
+
+ 
+            button.type = "button";
+            button.textContent = "▼";
+//            button.value     = "▼";
+//            button.className = "btn_scan";
+            button.title = "Сканировать сети";
+            button.style.background = 'transparent';
+            button.style.border = 'none';
+            button.style.padding = '0';
+            button.style.marginLeft = '5px';
+            button.style.cursor = 'pointer';
+            button.style.fontSize = '20px';        
+            
+            const dropdown = document.createElement("div");
+            dropdown.className = "wifi-dropdown";
+            dropdown.style.display = "none";
+            
+            button.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (dropdown.style.display === "block") {
+                    dropdown.style.display = "none";
+                    return;
+                }
+                dropdown.innerHTML = '<div class="wifi-scanning">Сканирование...</div>';
+                dropdown.style.display = "block";
+                try {
+                    const networks = await this.scanNetworks();
+                    this.buildDropdown(dropdown, networks, input);
+                } catch (err) {
+                    dropdown.innerHTML = '<div class="wifi-error">Ошибка сканирования</div>';
+                    console.error("WiFi scan error:", err);
+                }
+            });
+            
+            document.addEventListener("click", () => {
+                dropdown.style.display = "none";
+            });
+            
+            container.addEventListener("click", (e) => {
+                e.stopPropagation();
+            });
+            
+            container.appendChild(input);
+            container.appendChild(button);
+            container.appendChild(dropdown);
+            this.createLabel().appendChild(container);
+        }
+        
+        async scanNetworks() {
+            const response = await fetch(this.config.request, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "cmd=" + encodeURIComponent(this.config.cmd)
+            });
+            if (!response.ok) throw new Error("Scan failed");
+            return await response.json();
+        }
+        
+        buildDropdown(container, networks, input) {
+            container.innerHTML = "";
+            if (!networks.length) {
+                container.innerHTML = '<div class="wifi-empty">Сети не найдены</div>';
+                return;
+            }
+            networks.forEach(net => {
+                const item = document.createElement("div");
+                item.className = "wifi-item";
+                item.textContent = net.ssid || net.name || net.value;
+                if (net.signal) {
+                    const signal = document.createElement("span");
+                    signal.className = "wifi-signal";
+ //                   signal.textContent = this.signalIcon(net.signal);
+                    item.prepend(signal);
+                }
+                item.addEventListener("click", () => {
+                    input.value =  net.value;
+                    container.style.display = "none";
+                });
+                container.appendChild(item);
+            });
+        }
+       
+    }

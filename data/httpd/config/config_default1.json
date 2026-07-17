@@ -48,7 +48,7 @@
   "config2": {
     "SENSOR_TYPE": "3",
     "WIFI_MODE": "1",
-    "WIFI_NAME1": "ASUS_58_2G",
+    "WIFI_NAME1": "AX3000T_2G",
     "WIFI_PASS1": "sav59vas",
     "WIFI_NAME2": "910",
     "WIFI_PASS3": "89060725500",
@@ -62,7 +62,7 @@
     "CRM_PORT": 8001,
     "TB_ENABLE": false,
     "TB_GATEWAY": false,
-    "TB_HOST": "tb.svetoforbox.ru",
+    "TB_HOST": "109.172.115.70",
     "TB_PORT": 8088,
     "TB_TOKEN": "",
     "HTTP_ENABLE": false,

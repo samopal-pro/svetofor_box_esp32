@@ -7,7 +7,7 @@
  */
 // ===== MODULE DEBUG CONFIGURATION =====
 #define MODULE_NAME "HTTP"
-#define MODULE_DEBUG_LEVEL DEBUG_DEFAULT
+#define MODULE_DEBUG_LEVEL DEBUG_INFO
 #include "src/Slib/SDEBUG.h"
 #define IS_SET_ACTIVITY
 
@@ -349,6 +349,7 @@ void handleSave() {
 }
 
 void saveConfigData() {
+    LOG_INFOLN("Save Config");
     if (!webServer.hasArg("name") || !webServer.hasArg("data")) {
         LOG_ERRORLN("Missing name or data in save request");
         return;
@@ -399,6 +400,7 @@ void handleCommand() {
     
     if (cmd == "wifi_list") {
         output = WiFi_ScanNetwork();
+        LOG_INFOLN("Wifi: %s",output.c_str());
     }
     else if (cmd == "calibrate") {
         systemMP3((char*)"89", 85, PRIORITY_MP3_HIGH);
