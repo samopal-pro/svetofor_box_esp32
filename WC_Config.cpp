@@ -148,6 +148,7 @@ if (config["config2"]["ESP_NAME"].isNull() ||
  */
 void configWrite() {
     LOG_INFOLN("Writing configuration to: %s", pathConfig);
+    isChangeConfig = true;
     writeJson(pathConfig, config);
 }
 

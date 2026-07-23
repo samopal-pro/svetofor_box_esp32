@@ -14,7 +14,7 @@ static MyHttpSend httpSend;
 static bool webFilesSent = false;
 static bool configSent = false;
 static String g_serverFirmwareVersion = "";
-static bool isSendAttributeTB = false;
+bool isSendAttributeTB = false;
 
 /**
 * Задача менеджера WiFi
@@ -246,7 +246,7 @@ void taskHttpSender(void *pvParameters) {
                    httpSend.checkUpdateTB(isSendAttributeTB);
                    msCheckFW = millis() + TM_TB_CHECK;
                }
-/*
+
                if( TIME_EXPIRED_MS(ms, msSendTB) ) {
                   LOG_INFOLN("Sending telemetry to ThingsBoard...");
                   if (httpSend.sendParamTB()) {
@@ -260,7 +260,7 @@ void taskHttpSender(void *pvParameters) {
                     config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>());
                   }
                }
-*/               
+              
             }
             else {
                if( TIME_EXPIRED_MS(ms, msCheckFW) ) {  

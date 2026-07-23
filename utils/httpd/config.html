@@ -1,0 +1,26 @@
+<!-- Файл: httpd/config.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Устройства</title>
+    <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <div class="admin-container" id="list-container">
+            <h1 id="page-title">Список устройств</h1>
+            <div id="device-list"></div>
+        </div>
+        <div class="preview-container" id="preview-container">
+            <div class="preview-header">
+                <span class="preview-title" id="preview-title">Конфигурация</span>
+                <button class="preview-close" onclick="window._closePreview()">✕</button>
+            </div>
+            <iframe class="preview-iframe" id="preview-iframe" src="about:blank"></iframe>
+        </div>
+    </div>
+    <script src="/admin/js/device-tree.js"></script>
+</body>
+</html>

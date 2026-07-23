@@ -1,0 +1,19 @@
+    {
+        "ThingsBoard": {
+            "server": "http://109.172.115.70:8088",
+            "admin_user": "sav@ellips.ru",
+            "admin_pass": "_Sav59vas"
+        },
+        "SvetoforBox": {
+            "device_name": "68FE71AB1530",
+            "device_profile": "ParkingSensor",
+            "device_config": "./config/config.json",
+            "poll_interval": 15
+        },
+        "HTTPD": {
+            "web_root": "../data/httpd",
+            "admin_root": "./httpd",
+            "config_root": "./config",
+            "software_version": "1.0.0"
+        }
+    }

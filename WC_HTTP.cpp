@@ -381,7 +381,9 @@ void saveConfigData() {
     } else {
         copyJson(docConfig, config);
     }
-    
+    char uuid[40];
+    configUUID        = generateUUID(uuid);  
+    isSendAttributeTB = false;
     configWrite();
 }
 

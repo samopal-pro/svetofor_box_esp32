@@ -346,14 +346,8 @@ class ThingsBoardClient:
 # Получение ACCESS_TOKEN устройства по его имени.         
 ######################################################################################################
     def get_device_access_token(self, device_name: str) -> bool:
-        """Получение ACCESS_TOKEN устройства по его имени.
-        
-        Args:
-            device_name: Имя устройства.
-            
-        Returns:
-            ACCESS_TOKEN устройства или None в случае ошибки.
-        """
+        """Получение ACCESS_TOKEN устройства по его имени."""
+
         self.device_name  = device_name
         self.device_token = None
         self.device_id    = None
@@ -380,7 +374,6 @@ class ThingsBoardClient:
             devices = data.get('data', [])
             
             # Ищем устройство с точным совпадением имени
-            device_id = None
             for device in devices:
                 if device.get('name') == device_name:
                     self.device_id = device['id']['id']
@@ -389,43 +382,57 @@ class ThingsBoardClient:
             if not self.device_id:
                 print(f"❌ Устройство '{device_name}' не найдено")
                 return False
-
-            # Получение ACCESS_TOKEN устройства
-            token_url = f"{self.base_url}/api/device/{self.device_id}/credentials"
-            response = requests.get(token_url, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                print(f"❌ Ошибка получения токена устройства: {response.status_code}")
-                return False
-
-            credentials = response.json()
-            self.device_token = credentials.get('credentialsId')
-            
-            if self.device_token:
-                print(f"✅ ACCESS_TOKEN для '{device_name}' получен")
-                return True
-            else:
-                print(f"❌ ACCESS_TOKEN для '{device_name}' не найден")
-                return False
+            self.device_token = self.get_device_access_token_by_id(self.device_id)
+            return True
 
         except Exception as e:
             print(f"❌ Ошибка: {e}")
             return False        
         
 ######################################################################################################
+# Получение ACCESS_TOKEN устройства по его id.         
+######################################################################################################
+    def get_device_access_token_by_id(self, device_id: str) -> str|None:
+        if not device_id:
+            print(f"❌ Не задан device_id")
+            return None                   
+        headers = {
+            'X-Authorization': f'Bearer {self.token}',
+            'Accept': 'application/json'
+        }
+        try:
+            # Получение ACCESS_TOKEN устройства
+            token_url = f"{self.base_url}/api/device/{device_id}/credentials"
+            response = requests.get(token_url, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                print(f"❌ Ошибка получения токена устройства: {response.status_code}")
+                return None
+
+            credentials = response.json()
+            self.device_token = credentials.get('credentialsId')
+            
+            if self.device_token:
+                print(f"✅ ACCESS_TOKEN для '{device_id}' получен: '{self.device_token}'")
+                return self.device_token
+            else:
+                print(f"❌ ACCESS_TOKEN для '{device_id}' не найден")
+                return None
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+            return None        
+
+
+
+######################################################################################################
 # Получение значений атрибутов устройства по ACCESS_TOKEN.         
 ######################################################################################################
     def get_device_attributes(self,  attributes: str, attribute_type: str = "sharedKeys") -> dict | None:
-        """Получение значений атрибутов устройства по ACCESS_TOKEN.
-        
-        Args:
-            access_token: ACCESS_TOKEN устройства.
-            attributes: Список атрибутов через запятую (например, "firmware_version,model").
-            attribute_type: Тип атрибута (SHARED_SCOPE, CLIENT_SCOPE, SERVER_SCOPE).
-            
-        Returns:
-            Словарь с значениями атрибутов или None в случае ошибки.
-        """
+        """Получение значений атрибутов устройства по ACCESS_TOKEN."""
+        if not self.device_token:
+            print(f"❌ Access token не найден.")
+            return None
+
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -481,3 +488,86 @@ class ThingsBoardClient:
         except Exception as e:
             print(f"❌ Ошибка: {e}")
             return False
+
+
+
+
+######################################################################################################
+# Получает список устройств, принадлежащих указанному профилю.    
+######################################################################################################
+    def get_devices_by_profile(self, profile_name: str, page_size: int = 100) -> list | None:
+        """
+        Получает список устройств, принадлежащих указанному профилю."""
+        if not self.token:
+            print("❌ Токен не получен. Выполните auth()")
+            return None
+
+
+        if not profile_name:
+            print("❌ Укажите profile_name или profile_id")
+            return None
+            
+        self.device_profile_id = self.get_device_profile_id(profile_name) 
+        if not self.device_profile_id:
+            print(f"❌ Профиль '{profile_name}' не найден")
+            return None       
+        
+        headers = {
+            'X-Authorization': f'Bearer {self.token}',
+            'Accept': 'application/json'
+        }
+        
+        try:
+            devices = []
+            page = 0
+            
+            while True:
+                url = f"{self.base_url}/api/tenant/devices?deviceProfileId={self.device_profile_id}&pageSize={page_size}&page={page}"
+                response = requests.get(url, headers=headers, timeout=10)
+                
+                if response.status_code != 200:
+                    print(f"❌ Ошибка получения устройств: {response.status_code}")
+                    return None
+                    
+                data = response.json()
+                page_devices = data.get('data', [])
+                
+                if not page_devices:
+                    break
+                    
+                devices.extend(page_devices)
+                
+                if len(page_devices) < page_size:
+                    break
+                    
+                page += 1
+            
+            print(f"✅ Найдено {len(devices)} устройств в профиле")
+            return devices
+            
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+            return None        
+        
+######################################################################################################
+# Получает серверные атрибуты   
+######################################################################################################
+    def get_server_attributes(self, entity_id: str, entity_type: str = "DEVICE") -> dict | None:
+        """Получает серверные атрибуты."""
+        if not self.token:
+            print("❌ Токен не получен. Выполните auth()")
+            return None
+        headers = {
+            'X-Authorization': f'Bearer {self.token}',
+            'Accept': 'application/json'
+        }
+        try:
+            url = f"{self.base_url}/api/plugins/telemetry/{entity_type}/{entity_id}/keys/attributes"
+            response = requests.get(url, headers=headers, timeout=10)
+            if response.status_code != 200:
+                print(f"❌ Ошибка получения серверных атрибутов: {response.status_code}")
+                return None
+            return response.json()
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+            return None

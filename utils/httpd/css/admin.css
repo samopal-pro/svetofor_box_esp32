@@ -1,0 +1,260 @@
+/* Файл: httpd/css/admin.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #cccccc;
+    color: #000088;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.admin-layout {
+    display: flex;
+    gap: 15px;
+    max-width: 1300px;
+    margin: 0 auto;
+    align-items: flex-start;
+}
+
+.admin-container {
+    flex: 0 0 460px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 136, 0.15);
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.admin-container.with-preview {
+    flex: 0 0 420px;
+}
+
+.preview-container {
+    flex: 1;
+    min-width: 620px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 136, 0.15);
+    display: none;
+    position: sticky;
+    top: 20px;
+    height: calc(100vh - 40px);
+}
+
+.preview-container.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    padding: 12px 15px;
+    background: #cccccc;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.preview-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #000088;
+}
+
+.preview-close {
+    background: none;
+    border: none;
+    color: #000088;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 0 5px;
+    transition: color 0.2s ease;
+}
+
+.preview-close:hover {
+    color: #cc0000;
+}
+
+.preview-iframe {
+    width: 100%;
+    flex: 1;
+    border: none;
+    border-radius: 0 0 10px 10px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #000088;
+    font-size: 18px;
+    border-bottom: 2px solid #cccccc;
+    padding-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 15px;
+    color: #000088;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-link:hover {
+    color: #4444aa;
+}
+
+.back-link::before {
+    content: '← ';
+}
+
+.device-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+.device-table thead th {
+    background: #cccccc;
+    color: #000088;
+    padding: 8px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 2px solid #000088;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+    position: relative;
+}
+
+.device-table thead th:hover {
+    background: #bbbbdd;
+}
+
+.device-table thead th .sort-arrow {
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: 0.5;
+}
+
+.device-table thead th .sort-arrow.active {
+    opacity: 1;
+}
+
+.device-table thead th:first-child {
+    border-radius: 6px 0 0 0;
+}
+
+.device-table thead th:last-child {
+    border-radius: 0 6px 0 0;
+}
+
+.device-table thead th:nth-child(2) {
+    width: 25%;
+}
+
+.device-table tbody td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #cccccc;
+    font-size: 12px;
+    color: #000088;
+}
+
+.device-table tbody td:nth-child(2) {
+    width: 25%;
+}
+
+.device-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.device-table tbody tr:hover {
+    background: #f0f0ff;
+}
+
+.device-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.device-table tbody tr:last-child td:first-child {
+    border-radius: 0 0 0 6px;
+}
+
+.device-table tbody tr:last-child td:last-child {
+    border-radius: 0 0 6px 0;
+}
+
+.device-name-cell {
+    font-weight: normal;
+}
+
+.device-name-cell.has-config {
+    font-weight: 700;
+}
+
+.serial-cell {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+}
+
+.config-link {
+    color: #000088;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #cccccc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: inline-block;
+}
+
+.config-link:hover {
+    background: #000088;
+    color: #ffffff;
+}
+
+.config-link.loading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.config-none {
+    font-size: 11px;
+    color: #8888aa;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+    color: #000088;
+    font-size: 14px;
+}
+
+.error {
+    color: #cc0000;
+    padding: 12px;
+    background: #ffe6e6;
+    border-radius: 6px;
+    border: 1px solid #cc0000;
+    font-size: 13px;
+}
+
+.no-data {
+    text-align: center;
+    padding: 20px;
+    color: #666688;
+    font-size: 13px;
+}

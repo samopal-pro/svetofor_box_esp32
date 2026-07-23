@@ -102,7 +102,8 @@ typedef enum : int8_t {
 extern char strID[MAC_STR_LEN];
 extern char serNo[SERIAL_NO_LEN];
 extern uint64_t chipID;
-
+extern bool isChangeConfig;
+extern bool isSendAttributeTB;
 extern String configUUID;
 
 extern JsonDocument config_selector;
