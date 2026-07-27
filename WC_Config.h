@@ -10,8 +10,11 @@
 
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <esp_partition.h>
+#include <esp_ota_ops.h>
 
 #include "MyConfig.h"
+
 
 typedef struct {
     uint32_t fw_magic;
@@ -135,6 +138,8 @@ void readID();
 String deviceName();
 char *generateUUID(char* buffer);
 void listDir(const char* dirname, uint8_t levels);
+void printPartitionTable();
+void checkActiveOtaPartition();
 
 // ===== JSON Merge Functions =====
 bool mergeObject(JsonObjectConst src, JsonObject dst);

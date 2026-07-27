@@ -61,7 +61,6 @@
     "CRM_HOST": "crm.moscow",
     "CRM_PORT": 8001,
     "TB_ENABLE": true,
-    "TB_GATEWAY": false,
     "TB_HOST": "tb.svetoforbox.ru",
     "TB_PORT": 8088,
     "TB_TOKEN": "",

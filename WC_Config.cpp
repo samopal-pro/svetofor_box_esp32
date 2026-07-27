@@ -538,3 +538,47 @@ char *generateUUID(char* buffer) {
     buffer[36] = '\0';
     return buffer;
 }
+
+
+void printPartitionTable() {
+  LOG_INFOLN("Список разделов FLASH:");
+  
+  // Перебираем все типы разделов (приложения и данные)
+  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_ANY, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  
+  while (it != NULL) {
+    const esp_partition_t *part = esp_partition_get(it);
+    LOG_INFOLN("Имя: %-10s | Тип: %d | Адрес: 0x%06X | Размер: %d байт", part->label, part->type, part->address, part->size);
+    it = esp_partition_next(it);
+  }
+  
+  esp_partition_iterator_release(it);
+  checkActiveOtaPartition();
+}
+
+void checkActiveOtaPartition() {
+  LOG_INFOLN("\n--- Анализ OTA разделов ---");
+
+  // 1. Получаем раздел, с которого запущена текущая прошивка
+  const esp_partition_t *running = esp_ota_get_running_partition();
+  if (running != NULL) {
+    Serial.printf("Текущая запущенная прошивка: %s (Адрес: 0x%06X, Размер: %d байт)\n",
+                  running->label, running->address, running->size);
+  } else {
+    LOG_ERRORLN("Ошибка: не удалось определить запущенный раздел.");
+  }
+
+  // 2. Получаем раздел, настроенный для следующей загрузки (куда будет переключение)
+  const esp_partition_t *configured = esp_ota_get_boot_partition();
+  if (configured != NULL) {
+    LOG_INFOLN("Раздел для следующей загрузки: %s (Адрес: 0x%06X)",
+                  configured->label, configured->address);
+  }
+
+  // 3. Сравниваем их, чтобы понять, была ли совершена новая разметка
+  if (running == configured) {
+    LOG_INFOLN("Статус: Система работает стабильно на текущем выбранном разделе.");
+  } else {
+    LOG_INFOLN("Внимание: Назначен следующий раздел, отличный от текущего (ожидается перезагрузка).");
+  }
+}

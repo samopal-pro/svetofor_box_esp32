@@ -1,6 +1,7 @@
 #include "WC_Lora.h"
 // Настройка имени модуля для отладки
 #define MODULE_NAME "LORA"
+#define MODULE_DEBUG_LEVEL DEBUG_INFO
 #include "src/Slib/SDEBUG.h"
 #ifdef IS_LORA
 
@@ -26,32 +27,15 @@ static uint32_t msSendLoraAttr = 0;
 // Хендл задачи
 static TaskHandle_t loraTaskHandle = NULL;
 
+// Приоритеты задачи
+static bool isLoraLowPriority      = true;
+
 // Прототип обработчика событий LoRa
 static void handleEventLoRa();
 
 // ============================================================
 // ПУБЛИЧНЫЙ ИНТЕРФЕЙС
 // ============================================================
-
-/**
- * Инициализация подсистемы LoRa
- * Вызывается из основного кода при старте
- */
-void loraInit() {
-    LOG_INFOLN("Initializing LoRa subsystem");
-    
-    // Создаем задачу LoRa
-    xTaskCreate(
-        taskLora,           // Функция задачи
-        "taskLora",         // Имя задачи
-        4096,               // Размер стека
-        NULL,               // Параметры
-        15,                 // Приоритет (высокий для приема)
-        &loraTaskHandle     // Хендл задачи
-    );
-    
-    LOG_INFOLN("LoRa task created");
-}
 
 /**
  * Проверка готовности LoRa
@@ -64,7 +48,7 @@ bool loraIsReady() {
  * Принудительная отправка телеметрии
  */
 void loraForceSendTelemetry() {
-    msSendLora = 0;  // Сброс таймера вызовет немедленную отправку
+    msSendLora = millis();  // Сброс таймера вызовет немедленную отправку
     LOG_INFOLN("Forced telemetry send requested");
 }
 
@@ -115,8 +99,8 @@ static void handleEventLoRa() {
             }
             else {
                 // Broadcast — отвечаем немедленно
-                msSendLora = 0;
-                msSendLoraAttr = 0;
+                msSendLora = millis();
+                msSendLoraAttr = millis();
                 LOG_DEBUGLN("Broadcast RPC, sending reply immediately");
             }
             
@@ -144,6 +128,22 @@ static void handleEventLoRa() {
 // ЗАДАЧА LORA
 // ============================================================
 
+void setLoraActivity(){
+// Проверяем текущий уровень активности
+
+   bool _lowPriority = isLoraLowPriority;
+   isLoraLowPriority = !config["config2"]["LORA_ENABLE"].as<bool>();
+
+// Проверяем, изменился ли уровень активности
+   if( _lowPriority != isLoraLowPriority ){
+      isLoraLowPriority = _lowPriority; 
+      if( isLoraLowPriority )vTaskPrioritySet(NULL,LORA_LOW_PRIORITY);
+      else vTaskPrioritySet(NULL,LORA_HIGH_PRIORITY);
+      LOG_DEBUGLN("LORA loop Change Activity %d", (int)uxTaskPriorityGet(NULL));
+   }
+}
+
+
 /**
  * Основная задача LoRa
  * - Прием пакетов
@@ -157,68 +157,38 @@ void taskLora(void *pvParameters) {
     initLoraModule();
     
     uint32_t msCheck = 0;
-    
+    msSendLora = 0;
+    msSendLoraAttr = millis();
+
     while (true) {
         uint32_t ms = millis();
-        
-        // Проверка прерывания (пакет получен)
+
+        setLoraActivity();
+        if( isLoraLowPriority ){
+           vTaskDelay(LORA_LOW_TM);
+           continue;
+        }
+
+ // Проверка прерывания (пакет получен)
         if (loraIrq) {
             loraIrq = false;
-            readLora();
-            
-            // Обработка RPC команд (если есть)
-            if (myLora.StateRX == NSRX_OK || myLora.StateRX == NSRX_BROADCAST) {
-                uint8_t packetType = myLora.HeaderRX_V3.Type & B000111;
-                
-                if (packetType == PACKET_V3_TYPE_JSON_RPC) {
-                    handleEventLoRa();
-                }
-                else if (packetType == PACKET_V3_TYPE_ACK) {
-                    LOG_INFOLN("LoRa ACK received");
-                    isLoraACK = true;
-                }
-            }
+            readLora();           
         }
-        
-        // Периодическая проверка необходимости отправки (каждую секунду)
-        if (ms - msCheck >= 1000) {
-            msCheck = ms;
-            
-            if (!isLora) {
-                vTaskDelay(100);
-                continue;
-            }
-            
-            // Проверка включена ли отправка через конфиг
-            if (!config["config2"]["LORA_ENABLE"].as<bool>()) {
-                continue;
-            }
-            
-            uint32_t sendPeriod = config["config2"]["TM_HTTP_SEND"].as<uint32_t>() * 1000;
+
+// Периодическая отправка        
+        if( TIME_EXPIRED_MS(ms, msSendLora) || isSendLora ){
+            isSendLora = false;
+            uint32_t sendPeriod  = config["config2"]["TM_HTTP_SEND"].as<uint32_t>() * 1000;
             uint32_t retryPeriod = config["config2"]["TM_HTTP_RETRY_ERROR"].as<uint32_t>() * 1000;
-            
-            // Отправка телеметрии
-            if (msSendLora == 0 || ms >= msSendLora) {
-                if (isLoraACK && msSendLora != 0) {
-                    // Был ACK — ждем следующий период
-                    isLoraACK = false;
-                    msSendLora = ms + sendPeriod;
-                    LOG_DEBUGLN("ACK received, next send at %lu", msSendLora);
-                }
-                else {
-                    // Отправляем сейчас
-                    LOG_DEBUGLN("Sending telemetry");
-                    if (sendLoraTelemetry()) {
-                        msSendLora = ms + sendPeriod;
-                    }
-                    else {
-                        msSendLora = ms + retryPeriod;
-                    }
-                }
+            if (sendLoraTelemetry()) {
+                msSendLora = ms + sendPeriod;
+            }
+            else {
+                msSendLora = ms + retryPeriod;
             }
         }
-        
-        vTaskDelay(50);  // Небольшая задержка для предотвращения вачдога
+
+        vTaskDelay(LORA_HIGH_TM);  
     }
 }
 
@@ -301,6 +271,21 @@ void readLora() {
         LOG_ERRORLN("Read failed, error: %d", state);
     }
     
+    // Обработка RPC команд (если есть)
+    if (myLora.StateRX == NSRX_OK || myLora.StateRX == NSRX_BROADCAST) {
+        uint8_t packetType = myLora.HeaderRX_V3.Type & B000111;
+                
+        if (packetType == PACKET_V3_TYPE_JSON_RPC) {
+            handleEventLoRa();
+        }
+        else if (packetType == PACKET_V3_TYPE_ACK) {
+            LOG_INFOLN("LoRa ACK received");
+            isLoraACK = true;
+        }
+    }
+
+
+
     setLoraReceive(true);
 }
 

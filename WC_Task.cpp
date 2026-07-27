@@ -48,7 +48,8 @@ uint16_t bootCount;
 SemaphoreHandle_t sensorSemaphore, soundSemaphore/*, bootSemaphore */;
 uint32_t colorMP3   = COLOR_SAVE;
 
-bool isSendNet = false; // Флаг отсылки парамтров на сервер
+bool isSendNet  = false; // Флаг отсылки парамтров на сервер
+bool isSendLora = false; // Флаг отсылки парамтров на сервер
 
 /**
  * Старт всех параллельных задач
@@ -59,6 +60,7 @@ void tasksStart() {
   readID();
   configInit();
   printFW();
+  printPartitionTable();
   //delay(3000000);
   bootCount = saveCount(); 
   
@@ -91,39 +93,15 @@ void tasksStart() {
    xTaskCreateUniversal(taskEvents, "events", 4096, NULL, 3, NULL, CORE);
    xTaskCreateUniversal(taskRGB, "rgb", 2048, NULL, 2, NULL, CORE);
    xTaskCreateUniversal(taskMP3, "mp3", 2048, NULL, 1, NULL, CORE);
-
     // Создание задачи управления WiFi
-   xTaskCreateUniversal(
-        taskWiFiManager,    // Функция задачи
-        "wifi_mgr",         // Имя задачи
-        4096,               // Размер стека
-        NULL,               // Параметры
-        1,                  // Приоритет
-        NULL,               // Handle задачи
-        0                   // Ядро 0 (где работает WiFi стек)
-    );
-    
+   xTaskCreateUniversal(taskWiFiManager, "wifi_mgr", 4096, NULL, 1, NULL, 0);   
+#if defined(IS_LORA)
+   xTaskCreateUniversal(taskLora, "lora", 4096, NULL, LORA_LOW_PRIORITY, NULL, CORE);   
+#endif
     // Создание задачи отправки HTTP
-   xTaskCreateUniversal(
-        taskHttpSender,     // Функция задачи
-        "http_sender",      // Имя задачи
-        8192,               // Размер стека (больше для JSON операций)
-        NULL,               // Параметры
-        2,                  // Приоритет (выше чем WiFi менеджер)
-        NULL,               // Handle задачи
-        1                   // Ядро 1 (свободное ядро)
-    );
-
+   xTaskCreateUniversal(taskHttpSender, "http_sender", 8192, NULL, HTTP_LOW_PRIORITY, NULL, CORE);
     // Создание задачи отправки HTTP
-   xTaskCreateUniversal(
-        taskHttpServer,     // Функция задачи
-        "http_server",      // Имя задачи
-        4096,               // Размер стека (больше для JSON операций)
-        NULL,               // Параметры
-        3,                  // Приоритет (выше чем WiFi менеджер)
-        NULL,               // Handle задачи
-        1                   // Ядро 1 (свободное ядро)
-    );
+   xTaskCreateUniversal(taskHttpServer, "http_server", 4096, NULL, HTTPD_LOW_PRIORITY, NULL, CORE);
 
     
 
@@ -133,7 +111,7 @@ void tasksStart() {
    vTaskDelay(500);
    xTaskCreateUniversal(taskButton, "btn", 4096, NULL, 4, NULL,CORE);
    vTaskDelay(500);
-   xTaskCreateUniversal(taskDebug, "debug", 2048, NULL, 1, NULL,CORE);
+   xTaskCreateUniversal(taskDebug, "debug", 2048, NULL, 0, NULL,CORE);
 
    
 //  vTaskDelay(500);
@@ -612,7 +590,8 @@ void checkChangeOn(){
    uint32_t _color1, _color2;
    if( SensorOn == lastSensorOn )return;
    Serial.printf("!!! Stat is change %d %d\n", (int)SensorOn,(int)lastSensorOn);
-   isSendNet = true;
+   isSendNet  = true;
+   isSendLora = true;
    switch(SensorOn){
       case SS_BUSY:
 //      case SS_NAN_BUSY:   

@@ -40,6 +40,7 @@ extern bool isSendNet;
 extern int MP3_ADD_DIR;
 extern bool isNumStatRGB;
 extern float Distance;
+extern bool isSendNet, isSendLora;
 
 void tasksStart();
 void taskEvents(void *pvParameters);

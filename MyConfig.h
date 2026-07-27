@@ -22,7 +22,7 @@
 #define IS_DNS
 
  
-#define SOFTWARE_V           "10.1.3"
+#define SOFTWARE_V           "10.1.0"
 #define HARDWARE_V           "10.0.0"
 #define HTTPD_V              "10.1.0"
 #define CONFIG_V             "10.1.0"
@@ -149,3 +149,25 @@
 #define DOWNLOAD_TIMEOUT   30000
 
 #define TM_TB_CHECK 15000  // Интервал проверки обновления версии в мс
+
+// Приоритеты задач
+#define HTTPD_LOW_PRIORITY    0
+#define HTTPD_MEDIUM_PRIORITY 2
+#define HTTPD_HIGH_PRIORITY   4
+#define HTTPD_LOW_TM          1000
+#define HTTPD_MEDIUM_TM       200
+#define HTTPD_HIGH_TM         20
+#define HTTPD_LOW_ACTIVITY    0
+#define HTTPD_MEDIUM_ACTIVITY 1
+#define HTTPD_HIGH_ACTIVITY   2
+
+#define LORA_LOW_PRIORITY    0
+#define LORA_HIGH_PRIORITY   5
+#define LORA_LOW_TM          1000
+#define LORA_HIGH_TM         50
+
+#define HTTP_LOW_PRIORITY    0
+#define HTTP_HIGH_PRIORITY   5
+#define HTTP_LOW_TM          1000
+#define HTTP_HIGH_TM         100
+

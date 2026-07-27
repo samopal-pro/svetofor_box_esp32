@@ -12,3 +12,4 @@ extern bool isWiFiConnected;
 
 void taskWiFiManager(void *pvParameters);
 void taskHttpSender(void *pvParameters);
+void setHttpActivity();

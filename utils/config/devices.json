@@ -1,0 +1,354 @@
+{
+    "68FE71A80FA0": {
+        "id": "094588c0-6b00-11f1-bf2e-15f0e52d2094",
+        "token": "coNozk7yKD13ZvxZoEX0",
+        "serial_no": 4535,
+        "dogovor_no": 0,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A71C": {
+        "id": "0ad4df40-72eb-11f1-bf2e-15f0e52d2094",
+        "token": "1skTYc7gSFvNCC7i0B8U",
+        "serial_no": 4687,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A724": {
+        "id": "0b2b9de0-7303-11f1-bf2e-15f0e52d2094",
+        "token": "cZibn73J6p51qzptsvkG",
+        "serial_no": 4665,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A758": {
+        "id": "0f057360-6b05-11f1-bf2e-15f0e52d2094",
+        "token": "iDaOSFtusKLT8S127CYs",
+        "serial_no": 4669,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A8102C": {
+        "id": "18a2ecd0-6bfb-11f1-bf2e-15f0e52d2094",
+        "token": "sRHsHrFhdDgJm3S40Gwi",
+        "serial_no": 4683,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80EF4": {
+        "id": "1b6e4a80-6a8a-11f1-bf2e-15f0e52d2094",
+        "token": "LAq9oHcpkHLJGDWlPjLR",
+        "serial_no": 4676,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000009": {
+        "id": "1f4d4ba0-024e-11f1-80e5-abaedbfd3d38",
+        "token": "lesrQ73BoKWXoLVj03yA",
+        "serial_no": "SIM009",
+        "dogovor_no": 13,
+        "box_no": 209,
+        "config_uuid": ""
+    },
+    "68FE71A99F94": {
+        "id": "29d4c8b0-6d78-11f1-bf2e-15f0e52d2094",
+        "token": "iBWXplhIxlqEfrkkg9fK",
+        "serial_no": 4677,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000010": {
+        "id": "2db88c90-024e-11f1-80e5-abaedbfd3d38",
+        "token": "DeVOnUPaYNI9FkNVjJpG",
+        "serial_no": "SIM010",
+        "dogovor_no": 13,
+        "box_no": 210,
+        "config_uuid": ""
+    },
+    "68FE71AB14F0": {
+        "id": "3b2bd380-6bfa-11f1-bf2e-15f0e52d2094",
+        "token": "iN2mKLkE6XA6vNkkASoJ",
+        "serial_no": 4675,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A6A8": {
+        "id": "502d27f0-8141-11f1-8f6c-c58a5bd3fac0",
+        "token": "rBfC9aFMHLlhX78qwLfL",
+        "serial_no": "",
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80FF0": {
+        "id": "5350c620-6bf8-11f1-bf2e-15f0e52d2094",
+        "token": "ZaaeMscPysazoysVFNw0",
+        "serial_no": 4682,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80EC8": {
+        "id": "5a1b7240-6d77-11f1-bf2e-15f0e52d2094",
+        "token": "msSzcXM7aFh7lr0M4Vtp",
+        "serial_no": 4671,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71AB1494": {
+        "id": "5d911590-7c60-11f1-80c9-5986888cac20",
+        "token": "ku1oUYfY6MvoRyITQ4ru",
+        "serial_no": "",
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80EE0": {
+        "id": "67fccad0-72ea-11f1-bf2e-15f0e52d2094",
+        "token": "xIz4rR5imhPJxbxucBdq",
+        "serial_no": 4673,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A99F60": {
+        "id": "6bb2c360-72e9-11f1-bf2e-15f0e52d2094",
+        "token": "mnxJ8PDXTXvGG85KYSyJ",
+        "serial_no": 4670,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A688": {
+        "id": "7668bd20-72ec-11f1-bf2e-15f0e52d2094",
+        "token": "5Z17JaIkRI6bvw82zHxa",
+        "serial_no": 4664,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80F58": {
+        "id": "77fc54b0-6d76-11f1-bf2e-15f0e52d2094",
+        "token": "YVrEQ9L10s6KExe20H9i",
+        "serial_no": 4681,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71AB13EC": {
+        "id": "78627ea0-6d78-11f1-bf2e-15f0e52d2094",
+        "token": "TbiIn05ImeaktL823LqC",
+        "serial_no": 4688,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "781C3CCE93F0": {
+        "id": "787fb350-6af6-11f1-bf2e-15f0e52d2094",
+        "token": "FbTST90xVw7bEfppScQ2",
+        "serial_no": "",
+        "dogovor_no": "",
+        "box_no": "",
+        "config_uuid": ""
+    },
+    "SIM0000002": {
+        "id": "84719690-024d-11f1-80e5-abaedbfd3d38",
+        "token": "6GxViTMojRNsew3fa8n8",
+        "serial_no": "SIM002",
+        "dogovor_no": 13,
+        "box_no": 202,
+        "config_uuid": ""
+    },
+    "68FE71A9A678": {
+        "id": "88118060-72ed-11f1-bf2e-15f0e52d2094",
+        "token": "R9Z0pvHJyuJZCEX7ioiT",
+        "serial_no": 4691,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A8103C": {
+        "id": "903cdb80-6a88-11f1-bf2e-15f0e52d2094",
+        "token": "fLEO06aQc4Qe2nesVpDq",
+        "serial_no": 4686,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A704": {
+        "id": "934d1720-72eb-11f1-bf2e-15f0e52d2094",
+        "token": "wS33rjegrLN4VIgw6WOO",
+        "serial_no": 4689,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80EA4": {
+        "id": "9527f000-6bf8-11f1-bf2e-15f0e52d2094",
+        "token": "phui59ph0gIc5CjrV3m5",
+        "serial_no": 4666,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000003": {
+        "id": "96ab92c0-024d-11f1-80e5-abaedbfd3d38",
+        "token": "ktqqDRlNDSoxIHbpSu6k",
+        "serial_no": "SIM003",
+        "dogovor_no": 13,
+        "box_no": 203,
+        "config_uuid": ""
+    },
+    "68FE71A99EC8": {
+        "id": "a15ea6b0-72e8-11f1-bf2e-15f0e52d2094",
+        "token": "1mTaIDKyaRCyELD5AAQA",
+        "serial_no": 4692,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A99F7C": {
+        "id": "a35e1820-6a40-11f1-bf2e-15f0e52d2094",
+        "token": "XewUC76ySpTIVMRawleD",
+        "serial_no": 4549,
+        "dogovor_no": 0,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000004": {
+        "id": "a7e89150-024d-11f1-80e5-abaedbfd3d38",
+        "token": "0H4QgsskM9bbA2k7e5kw",
+        "serial_no": "SIM004",
+        "dogovor_no": 13,
+        "box_no": 204,
+        "config_uuid": ""
+    },
+    "68FE71A80E84": {
+        "id": "a91ef390-6bfa-11f1-bf2e-15f0e52d2094",
+        "token": "UOavmSRAMG9ocnOTMUzV",
+        "serial_no": 4690,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71AB1530": {
+        "id": "af6f53b0-810e-11f1-8f6c-c58a5bd3fac0",
+        "token": "LEHcxdlDHum8slZpqANU",
+        "serial_no": "SAV4366",
+        "dogovor_no": 888,
+        "box_no": 1,
+        "config_uuid": "8d6f2214-ce5f-4fed-9183-15680640ad23"
+    },
+    "68FE71A9A730": {
+        "id": "b5ae6510-6bf9-11f1-bf2e-15f0e52d2094",
+        "token": "vmNHQe2LPghNkGLqCBnY",
+        "serial_no": 4680,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000005": {
+        "id": "b76f5460-024d-11f1-80e5-abaedbfd3d38",
+        "token": "nbaLA0HZxxGy5PzizJWR",
+        "serial_no": "SIM005",
+        "dogovor_no": 13,
+        "box_no": 205,
+        "config_uuid": ""
+    },
+    "68FE71A9A760": {
+        "id": "be64bb10-6bf8-11f1-bf2e-15f0e52d2094",
+        "token": "imk8IOHbYnbYGrZKOOSx",
+        "serial_no": 4693,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80EF0": {
+        "id": "c487c7a0-6b29-11f1-bf2e-15f0e52d2094",
+        "token": "clMS6RyFW5JlQdvepPqI",
+        "serial_no": "",
+        "dogovor_no": "",
+        "box_no": "",
+        "config_uuid": ""
+    },
+    "68FE71A9A6E4": {
+        "id": "c891f320-6d77-11f1-bf2e-15f0e52d2094",
+        "token": "KA5Sjt7q1Wg8l8QznyZ8",
+        "serial_no": 4672,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A80F34": {
+        "id": "ce615490-7302-11f1-bf2e-15f0e52d2094",
+        "token": "w370VShD0gsEnGztXXlQ",
+        "serial_no": 4679,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000006": {
+        "id": "ce75a5b0-024d-11f1-80e5-abaedbfd3d38",
+        "token": "QCCiwx9zFUfRYdcHULs4",
+        "serial_no": "SIM006",
+        "dogovor_no": 13,
+        "box_no": 206,
+        "config_uuid": ""
+    },
+    "68FE71A80EC4": {
+        "id": "ce9b66b0-6d78-11f1-bf2e-15f0e52d2094",
+        "token": "hJG8bOuLVhOAW87iIbcT",
+        "serial_no": 4668,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000007": {
+        "id": "de38ae70-024d-11f1-80e5-abaedbfd3d38",
+        "token": "KfmTCX7ClhKMjtkOI8PO",
+        "serial_no": "SIM007",
+        "dogovor_no": 13,
+        "box_no": 207,
+        "config_uuid": ""
+    },
+    "68FE71A80E90": {
+        "id": "ed9af420-6bf9-11f1-bf2e-15f0e52d2094",
+        "token": "sph75S3sw5ZducI6K7ED",
+        "serial_no": 4678,
+        "dogovor_no": 0,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "68FE71A9A6F8": {
+        "id": "eeef3300-6d79-11f1-bf2e-15f0e52d2094",
+        "token": "qb8ty1upw28qAcGZdGjR",
+        "serial_no": 4684,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    },
+    "SIM0000008": {
+        "id": "f0b531e0-024d-11f1-80e5-abaedbfd3d38",
+        "token": "Q1vIkDy3de43GpfJ4EcB",
+        "serial_no": "SIM008",
+        "dogovor_no": 13,
+        "box_no": 208,
+        "config_uuid": ""
+    },
+    "68FE71A80EDC": {
+        "id": "fd32a800-6d76-11f1-bf2e-15f0e52d2094",
+        "token": "rwIvjwsG1ibHxfpoXgIP",
+        "serial_no": 4685,
+        "dogovor_no": 8888,
+        "box_no": 1,
+        "config_uuid": ""
+    }
+}

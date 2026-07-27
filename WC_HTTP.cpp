@@ -35,46 +35,44 @@ bool isFirstPlay = true;
 // ===== DOCUMENT POOL =====
 JsonDocument jsonDoc;
 
-uint8_t httpActivity     = 1;
-uint8_t httpLoopPriority = 2;
-uint32_t httpLoopTimeout = 100;
+static uint8_t httpActivity     = HTTPD_MEDIUM_ACTIVITY;
+static uint8_t httpLoopPriority = HTTPD_MEDIUM_PRIORITY;
+static uint32_t httpLoopTimeout = HTTPD_MEDIUM_TM;
 
 // ======================================================================
 // SECTION 0: Основная задача обработки цикла сервера
 // ======================================================================
-bool setHttpActivity(){
+bool setHttpdActivity(){
 
 // Проверяем текущий уровень активности
 
    uint8_t _activity = httpActivity;
    uint32_t _idle    = webServer.getIdleTime();
-   if( _idle > 30000 )_activity = 0;
-   else if( _idle > 2000 )_activity = 1;
-   else _activity = 2;
+   if( _idle > 30000 )_activity     = HTTPD_LOW_ACTIVITY;
+   else if( _idle > 2000 )_activity = HTTPD_MEDIUM_ACTIVITY;
+   else _activity                   = HTTPD_HIGH_ACTIVITY;
 
 // Проверяем, изменился ли уровень активности
    if( _activity != httpActivity ){
       httpActivity = _activity; 
       switch( _activity ){
-         case 0: 
-            httpLoopPriority = 0;
-            httpLoopTimeout  = 1000;
+         case HTTPD_LOW_ACTIVITY: 
+            httpLoopPriority = HTTPD_LOW_PRIORITY;
+            httpLoopTimeout  = HTTPD_LOW_TM;
             break;
-         case 1: 
-            httpLoopPriority = 2;
-            httpLoopTimeout  = 100;
+         case HTTPD_MEDIUM_ACTIVITY: 
+            httpLoopPriority = HTTPD_MEDIUM_PRIORITY;
+            httpLoopTimeout  = HTTPD_MEDIUM_TM;
             break;
-         case 2: 
-            httpLoopPriority = 4;
-            httpLoopTimeout  = 20;
+         case HTTPD_HIGH_ACTIVITY: 
+            httpLoopPriority = HTTPD_HIGH_PRIORITY;
+            httpLoopTimeout  = HTTPD_HIGH_TM;
             break;           
       }
       LOG_DEBUGLN("HTTPD loop Change Activity %d %d %d", (int)uxTaskPriorityGet(NULL), (int)httpLoopPriority, (int)httpLoopTimeout);
       return true;
    }
-
    return false;
-
 }
 
 
@@ -88,7 +86,7 @@ void taskHttpServer(void *pvParameters) {
    LOG_INFOLN("Starting loop HTTPS server %d",(int)uxTaskPriorityGet(NULL));
 //   HTTPD_start();
    while (true) {
-      if( setHttpActivity() ){
+      if( setHttpdActivity() ){
          vTaskPrioritySet(NULL, httpLoopPriority);
       }
       HTTPD_loop();      

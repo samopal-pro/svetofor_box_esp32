@@ -2,6 +2,7 @@
 # Безопасная загрузка и доступ к настройкам из config/setting.json.
 import json
 import sys
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -10,13 +11,21 @@ class ConfigLoader:
     """Загружает и предоставляет доступ к конфигурации приложения."""
     
     def __init__(self, config_path=None):
+        self._base_dir = self.get_base_dir()
         if config_path is None:
-            current_dir = Path(__file__).resolve().parent.parent
-            config_path = current_dir / 'config' / 'setting.json'
+#            current_dir = Path(__file__).resolve().parent.parent
+            config_path = self._base_dir / 'config' / 'setting.json'
         self.config_path = Path(config_path)
         self._setting = None
         self.load()
     
+    def get_base_dir(self):
+        """Возвращает базовую директорию приложения."""
+        if getattr(sys, 'frozen', False):
+            return Path(sys.executable).parent
+        else:
+            return Path(__file__).resolve().parent.parent
+                    
     def load(self):
         """Загружает конфигурацию из JSON-файла."""
         try:
@@ -26,6 +35,11 @@ class ConfigLoader:
             )
         except (FileNotFoundError, json.JSONDecodeError) as e:
             sys.exit(f"❌ Критическая ошибка: Не удалось прочитать {self.config_path.name} ({type(e).__name__}).")
+    
+    @property
+    def base_dir(self):
+        """Возвращает базовую директорию приложения."""
+        return self._base_dir
     
     @property
     def setting(self):
@@ -49,9 +63,9 @@ class ConfigLoader:
     
     @property
     def device_config(self):
-        """Файл config устройства."""
-        return self._setting.SvetoforBox.device_config
-
+        """Полный путь к файлу конфигурации устройства."""
+        return os.path.normpath(os.path.join(self._base_dir, self._setting.SvetoforBox.device_config))
+    
     @property
     def device_profile(self):
         """Имя профайла устройств."""
@@ -64,18 +78,18 @@ class ConfigLoader:
     
     @property
     def web_root(self):
-        """Путь к веб-корню относительно utils."""
-        return self._setting.HTTPD.web_root
+        """Полный путь к веб-корню."""
+        return os.path.normpath(os.path.join(self._base_dir, self._setting.HTTPD.web_root))
     
     @property
     def admin_root(self):
-        """Путь к веб-корню админки относительно utils."""
-        return self._setting.HTTPD.admin_root
-
+        """Полный путь к веб-корню админки."""
+        return os.path.normpath(os.path.join(self._base_dir, self._setting.HTTPD.admin_root))
+    
     @property
     def config_root(self):
-        """Путь к веб-корню конфигурации относительно utils."""
-        return self._setting.HTTPD.config_root
+        """Полный путь к веб-корню конфигурации."""
+        return os.path.normpath(os.path.join(self._base_dir, self._setting.HTTPD.config_root))
     
     @property
     def software_version(self):

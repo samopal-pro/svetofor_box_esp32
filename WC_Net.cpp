@@ -16,6 +16,11 @@ static bool configSent = false;
 static String g_serverFirmwareVersion = "";
 bool isSendAttributeTB = false;
 
+// Приоритеты задачи
+static bool isHttpLowPriority      = true;
+
+
+JsonDocument jsonData;
 /**
 * Задача менеджера WiFi
 */
@@ -162,6 +167,25 @@ void taskWiFiManager(void *pvParameters) {
     }
 }
 
+void setHttpActivity(){
+// Проверяем текущий уровень активности
+
+   bool _lowPriority = isHttpLowPriority;
+   if( config["config2"]["CRM_ENABLE"].as<bool>() || config["config2"]["HTTP_ENABLE"].as<bool>() || config["config2"]["TB_ENABLE"].as<bool>() )isHttpLowPriority = false;
+   else isHttpLowPriority = true;
+
+// Проверяем, изменился ли уровень активности
+   if( _lowPriority != isHttpLowPriority ){
+      isHttpLowPriority = _lowPriority; 
+      if( isHttpLowPriority )vTaskPrioritySet(NULL,HTTP_LOW_PRIORITY);
+      else vTaskPrioritySet(NULL,HTTP_HIGH_PRIORITY);
+      LOG_DEBUGLN("HTTP loop Change Activity %d", (int)uxTaskPriorityGet(NULL));
+   }
+}
+
+
+
+
 /**
 * Задача отправки HTTP данных
 */
@@ -192,14 +216,25 @@ void taskHttpSender(void *pvParameters) {
             vTaskDelay(1000);
             continue;
         }
+        setHttpActivity();
+
         if (isFirstConnect) {
             isFirstConnect = false;
-            msSendHttp = ms;
-            msSendCrm = ms;
-            msSendTB = ms;
+            isSendNet = true;
+//            msSendHttp = ms;
+//            msSendCrm = ms;
+//            msSendTB = ms;
             LOG_INFOLN("HTTP sender timer reset");
             
         }
+        if(  isSendNet ){
+            isSendNet  = false;
+            msSendHttp = ms;
+            msSendCrm  = ms;
+            msSendTB   = ms;
+//           msSendLora = ms;
+            LOG_INFOLN("HTTP send activate");
+        } 
         
         if (config["config2"]["CRM_ENABLE"].as<bool>() &&
             TIME_EXPIRED_MS(ms, msSendCrm)) {
@@ -275,6 +310,11 @@ void taskHttpSender(void *pvParameters) {
 
 
         }
-        vTaskDelay(100);
+        if( isHttpLowPriority ){
+            vTaskDelay(HTTP_LOW_TM);
+        }   
+        else {
+            vTaskDelay(HTTP_HIGH_TM);
+        }
     }
 }

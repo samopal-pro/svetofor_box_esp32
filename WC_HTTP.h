@@ -132,7 +132,7 @@ LOG_INFOLN("!!! HTTP SERVER REQUEST\n");
 */
 
 void taskHttpServer(void *pvParameters);
-bool setHttpActivity();
+bool setHttpdActivity();
 
 // ===== HTTP SERVER CORE =====
 void HTTPD_start();        // ← ВОЗВРАЩАЕМ эту функцию

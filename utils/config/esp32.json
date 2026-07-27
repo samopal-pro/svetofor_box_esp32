@@ -1,0 +1,9 @@
+{
+    "firmware_path": "..\\build\\esp32.esp32.esp32\\svetofor_box_esp32.ino.bin",
+    "filesystem_path": "..\\data",
+    "httpd_path": "..\\data\\httpd",
+    "tb_server": "http://109.172.115.70:8088",
+    "tb_user": "esp32@gmail.com",
+    "tb_pass": "_Svetofor10box",
+    "tb_profile": "ParkingSensor"
+}
