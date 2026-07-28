@@ -33,7 +33,7 @@ bool isAuthenticatedFlag = false;
 bool isFirstPlay = true;
 
 // ===== DOCUMENT POOL =====
-JsonDocument jsonDoc;
+//JsonDocument jsonDoc;
 
 static uint8_t httpActivity     = HTTPD_MEDIUM_ACTIVITY;
 static uint8_t httpLoopPriority = HTTPD_MEDIUM_PRIORITY;
@@ -84,7 +84,7 @@ bool setHttpdActivity(){
  */
 void taskHttpServer(void *pvParameters) {
    LOG_INFOLN("Starting loop HTTPS server %d",(int)uxTaskPriorityGet(NULL));
-//   HTTPD_start();
+   HTTPD_start();
    while (true) {
       if( setHttpdActivity() ){
          vTaskPrioritySet(NULL, httpLoopPriority);
@@ -256,6 +256,27 @@ void handleFile() {
         uri = "/index.html";
     }
     
+    // Captive portal: редирект на index.html для неизвестных путей
+    if (!LittleFS.exists(String(HTTPD_PREFIX) + uri)) {
+        String userAgent = webServer.header("User-Agent");
+        // Проверяем запросы captive portal от ОС
+        if (userAgent.indexOf("CaptiveNetworkSupport") >= 0 ||
+            userAgent.indexOf("Microsoft NCSI") >= 0 ||
+            uri == "/generate_204" ||
+            uri == "/hotspot-detect.html" ||
+            uri == "/ncsi.txt" ||
+            uri == "/connecttest.txt" ||
+            uri == "/redirect" ||
+            uri == "/success.txt" ||
+            uri == "/canonical.html" ||
+            uri == "/fwlink") {
+            LOG_INFOLN("Captive portal request: %s", uri.c_str());
+            webServer.sendHeader("Location", "/index.html", true);
+            webServer.send(302, CONTENT_TYPE_TEXT, "");
+            return;
+        }
+    }
+    
     HTTP_file(uri);
 }
 
@@ -302,6 +323,19 @@ bool HTTP_redirect() {
     String serverLoc = webServer.client().localIP().toString();
     
     if (serverLoc != webServer.hostHeader()) {
+        // Проверяем, не запрос ли это captive portal
+        String uri = webServer.uri();
+        if (uri == "/generate_204" || 
+            uri == "/hotspot-detect.html" ||
+            uri == "/ncsi.txt" ||
+            uri == "/connecttest.txt") {
+            // Не редиректим на IP, а отдаем свою страницу
+            webServer.sendHeader("Location", "http://" + serverLoc + "/index.html", true);
+            webServer.send(302, CONTENT_TYPE_TEXT, "");
+            webServer.client().stop();
+            return true;
+        }
+        
         LOG_INFOLN("Redirect: %s -> %s", webServer.hostHeader().c_str(), serverLoc.c_str());
         webServer.sendHeader("Location", String("http://") + serverLoc, true);
         webServer.send(302, CONTENT_TYPE_TEXT, "");
@@ -560,8 +594,10 @@ void handleFirmwareUpload() {
 // ======================================================================
 
 String WiFi_ScanNetwork() {
-    LOG_INFOLN("Scanning WiFi networks...");
-    
+    JsonDocument _doc;
+    LOG_INFOLN("Scanning WiFi networks %d ...",(int)WiFi.getMode());
+ //   WiFi.enableSTA(true);
+ 
     int n = WiFi.scanNetworks();
     if (n <= 0) {
         LOG_ERRORLN("No networks found");
@@ -569,6 +605,7 @@ String WiFi_ScanNetwork() {
     }
     
     int* indices = new int[n];
+    LOG_INFOLN("Found WiFi %d", n);
     for (int i = 0; i < n; i++) {
         indices[i] = i;
     }
@@ -581,8 +618,8 @@ String WiFi_ScanNetwork() {
         }
     }
     
-    jsonDoc.clear();
-    JsonArray array = jsonDoc.to<JsonArray>();
+    _doc.clear();
+    JsonArray array = _doc.to<JsonArray>();
     
     for (int i = 0; i < n; i++) {
         JsonObject obj = array.add<JsonObject>();
@@ -592,11 +629,11 @@ String WiFi_ScanNetwork() {
     }
     
     String result;
-    serializeJson(jsonDoc, result);
+    serializeJson(_doc, result);
     
     delete[] indices;
     
-    LOG_DEBUGLN("WiFi scan result: %d networks", n);
+    LOG_INFOLN("WiFi scan result: %d %s networks", n,result.c_str());
     return result;
 }
 

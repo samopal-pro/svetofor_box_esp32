@@ -224,6 +224,7 @@ class HttpServer:
 #            self.wait_mp3_and_reboot()
         elif cmd == 'device':
             device_name = request.form.get('device_name', '')
+            logger.info(f"!!! device name : {device_name}")
             if device_name:
                 self.strID = device_name
                 self.serNo = request.form.get('serial_no', '')

@@ -28,8 +28,8 @@
     "MAX_DISTANCE1": 270,
     "MIN_DISTANCE2": 270,
     "MAX_DISTANCE2": 270,
-    "STAT_AP": 0,
-    "STAT_STA": 1
+    "STAT_AP": 14,
+    "STAT_STA": 15
   },
   "config1": {
     "TM_ON_RELAY1": 1,
@@ -138,14 +138,14 @@
     "MP3_BTN_ADD1_NUM": 7,
     "MP3_BTN_ADD1_DELAY": 0,
     "MP3_BTN_ADD1_LOOP": false,
-    "BUSY_BTN_ADD1_COLOR": "#FFFF00",
+    "BUSY_BTN_ADD1_COLOR": "#FF0000",
     "BUSY_BTN_ADD1_COLOR_TM": 4,
 
     "MP3_BTN_ADD2_ENABLE": true,
     "MP3_BTN_ADD2_NUM": 8,
-    "MP3_BTN_ADD2_DELAY": 30,
+    "MP3_BTN_ADD2_DELAY": 20,
     "MP3_BTN_ADD2_LOOP": false,
-    "BUSY_BTN_ADD2_COLOR": "#FFFF00",
+    "BUSY_BTN_ADD2_COLOR": "#FF0000",
     "BUSY_BTN_ADD2_COLOR_TM": 4,
 
     "MP3_BTN_ADD_FREE1_ENABLE": true,

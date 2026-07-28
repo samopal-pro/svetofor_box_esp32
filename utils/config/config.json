@@ -34,13 +34,13 @@
     "WIFI_PASS2": ""
   },
   "main": {
-    "name": "СЃonfig1",
-    "label": "РўРµСЃС‚",
+    "name": "\u0420\u040e\u0420\u0453onfig1",
+    "label": "\u0420\u00a0\u0421\u045b\u0420\u00a0\u0412\u00b5\u0420\u040e\u0420\u0453\u0420\u040e\u0432\u0402\u0459",
     "file": "/httpd/config/config1.json"
   },
   "config": {
     "MP3_SHORT_MSG": true,
-    "BRIGHTNESS": "9",
+    "BRIGHTNESS": "5",
     "FREE_COLOR": "#0000ff",
     "FREE_COLOR1": "#0000FF",
     "FREE_COLOR2": "#00FF00",
@@ -56,12 +56,12 @@
     "IS_COLOR_NAN": true,
     "TM_LOOP": "1",
     "MEASURE_TYPE": "1",
-    "GROUP_LEVEL": "1354",
+    "GROUP_LEVEL": "1369",
     "LIMIT_DISTANCE": "270",
-    "MIN_DISTANCE1": "1354",
-    "MAX_DISTANCE1": "1354",
-    "MIN_DISTANCE2": "1354",
-    "MAX_DISTANCE2": "1354",
+    "MIN_DISTANCE1": "1369",
+    "MAX_DISTANCE1": "1369",
+    "MIN_DISTANCE2": "1369",
+    "MAX_DISTANCE2": "1369",
     "STAT_AP": "0",
     "STAT_STA": "1"
   },

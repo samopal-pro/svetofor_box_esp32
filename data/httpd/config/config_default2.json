@@ -2,7 +2,7 @@
   "main": {
     "name": "сonfig2",
     "label": "Автомойка",
-    "file": "/httpd/config/config2.json"
+    "file": "/httpd/config/config1.json"
   },
   "config": {
     "MP3_SHORT_MSG": true,

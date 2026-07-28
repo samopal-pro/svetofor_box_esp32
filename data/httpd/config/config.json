@@ -13,7 +13,7 @@
     "label": "Автомойка", 
     "mp3_num": 77,
     "text": "Конфигурация для автомойки",
-    "file": "/config/config2.json", 
+    "file": "/config/config1.json", 
     "default": "/config/config_default2.json" 
   },
   "config3": {
@@ -21,7 +21,7 @@
     "mp3_num": 78,
     "label": "Парковка", 
     "text": "Конфигурация для парковки",
-    "file": "/config/config3.json", 
+    "file": "/config/config1.json", 
     "default": "/config/config_default3.json" 
   }
 }

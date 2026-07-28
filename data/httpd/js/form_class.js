@@ -577,13 +577,13 @@ class SelectField extends FormField {
         const el = document.createElement("select");
         this.baseProperty(el);
         el.name = this.config.name;
-        if( (String(this.value) !== '' ) ){
-          const option     = document.createElement("option");
-          option.value     = String(this.value);
-          option.innerText = String(this.value);
-          option.selected  = true;
-          el.appendChild(option);
-        }
+//        if( (String(this.value) !== '' ) ){
+//          const option     = document.createElement("option");
+//          option.value     = String(this.value);
+//          option.innerText = String(this.value);
+//          option.selected  = true;
+//          el.appendChild(option);
+//        }
         if (this.config.options) this.createOption(el);
         else if(this.config.request) this.createOptionRequest(el);
           

@@ -99,9 +99,9 @@ void tasksStart() {
    xTaskCreateUniversal(taskLora, "lora", 4096, NULL, LORA_LOW_PRIORITY, NULL, CORE);   
 #endif
     // Создание задачи отправки HTTP
-   xTaskCreateUniversal(taskHttpSender, "http_sender", 8192, NULL, HTTP_LOW_PRIORITY, NULL, CORE);
+   xTaskCreateUniversal(taskHttpSender, "http_sender", 8192, NULL, HTTP_HIGH_PRIORITY, NULL, CORE);
     // Создание задачи отправки HTTP
-   xTaskCreateUniversal(taskHttpServer, "http_server", 4096, NULL, HTTPD_LOW_PRIORITY, NULL, CORE);
+   xTaskCreateUniversal(taskHttpServer, "http_server", 8192, NULL, HTTPD_LOW_PRIORITY, NULL, CORE);
 
     
 
