@@ -12,17 +12,28 @@ from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 
 # Определяем базовую директорию для ресурсов
-def get_base_dir():
-    """Возвращает базовую директорию приложения"""
+def get_app_paths():
     if getattr(sys, 'frozen', False):
-        # Если приложение запущено как скомпилированный .exe
-        return sys._MEIPASS
+        # Папка, куда PyInstaller распаковал файлы во время работы
+        temp_dir = sys._MEIPASS
+        # Папка, в которой лежит сам запущенный .exe файл
+        exe_dir = os.path.dirname(sys.executable)
     else:
-        # Если приложение запущено как обычный .py скрипт
-        return os.path.dirname(os.path.abspath(__file__))
+        # При обычном запуске .py оба пути ведут к папке скрипта
+        temp_dir = os.path.dirname(os.path.abspath(__file__))
+        exe_dir = temp_dir
+        
+    return temp_dir, exe_dir
 
-BASE_DIR = get_base_dir()
-LIB_DIR = os.path.join(BASE_DIR, 'lib')
+# Пример использования:
+PROG_PATH, DATA_PATH = get_app_paths()
+print(f"Временная папка (куда все распаковано): {PROG_PATH}")
+print(f"Папка запуска (где лежит EXE): {DATA_PATH}")
+
+#sys.exit(0)
+
+#BASE_DIR = PROG_PATH
+LIB_DIR = os.path.join(PROG_PATH, 'lib')
 if LIB_DIR not in sys.path:
     sys.path.insert(0, LIB_DIR)
 
@@ -95,20 +106,16 @@ class WorkerThread(QThread):
         super().__init__()
         self.operation = operation
         self.kwargs = kwargs
-        self.base_dir = BASE_DIR
+        self.base_dir = PROG_PATH
+        self.data_dir = DATA_PATH
     
     def _get_exe_path(self, exe_name):
         """Находит путь к исполняемому файлу"""
         # Проверяем в базовой директории
-        base_path = os.path.join(self.base_dir, exe_name)
-        if os.path.exists(base_path):
-            return base_path
-        
-        # Проверяем в текущей директории (где запущен exe)
-        current_path = os.path.join(os.path.dirname(sys.executable), exe_name)
-        if os.path.exists(current_path):
-            return current_path
-        
+        path_exe = os.path.join(self.data_dir, exe_name)
+        if os.path.exists(path_exe):
+            return path_exe
+
         # Проверяем в PATH
         import shutil
         path_exe = shutil.which(exe_name)
@@ -197,20 +204,38 @@ class WorkerThread(QThread):
     def _flash_firmware(self):
         """Прошивает бинарный файл на ESP32"""
         port = self.kwargs.get('port')
-        firmware_path = self.kwargs.get('firmware_path')
+#        firmware_path = self.kwargs.get('firmware_path')
+        config = self.kwargs.get('config', {})
+        firmware_path = os.path.abspath(os.path.join(self.data_dir, config.get('bootloader_path', '')))
+
+        flash_all = self.kwargs.get('flash_all', False)
         esptool = self._get_exe_path('esptool.exe')
-        cmd = [esptool, "-p", port, "-b", "460800",
-               "write_flash", "0x10000", firmware_path]
+        
+        if flash_all:
+            # Прошивка всех разделов
+            bootloader_path = os.path.abspath(os.path.join(self.data_dir, config.get('bootloader_path', '')))
+            partitions_path = os.path.abspath(os.path.join(self.data_dir, config.get('partitions_path', '')))
+            boot_app0_path = os.path.abspath(os.path.join(self.data_dir, config.get('boot_app0_path', '')))
+            
+            cmd = [esptool, "-p", port, "-b", "460800", "write-flash",
+                   "0x1000", bootloader_path,
+                   "0x8000", partitions_path,
+                   "0xe000", boot_app0_path,
+                   "0x10000", firmware_path]
+        else:
+            cmd = [esptool, "-p", port, "-b", "460800",
+                   "write-flash", "0x10000", firmware_path]
+        
         try:
             self.log.emit(f"Выполнение команды: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True)
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.data_dir)
             if result.returncode != 0:
                 return (False, result.stdout)
             self.log.emit("Прошивка загружена успешно")
             return (True, "Прошивка загружена успешно")
         except subprocess.CalledProcessError as e:
             return (False, str(e.output))
-    
+                    
     def _flash_littlefs(self):
         """Создает образ LittleFS и загружает на ESP32"""
         port = self.kwargs.get('port')
@@ -223,16 +248,16 @@ class WorkerThread(QThread):
                       "-p", "256", "-s", "1441792", "littlefs.bin"]
         try:
             self.log.emit(f"Выполнение команды: {' '.join(create_cmd)}")
-            result = subprocess.run(create_cmd, capture_output=True, text=True)
+            result = subprocess.run(create_cmd, capture_output=True, text=True, cwd=self.data_dir)
             if result.returncode != 0:
                 return (False, f"Ошибка создания FS: {result.stdout}")
             self.log.emit("Образ LittleFS создан успешно")
             esptool = self._get_exe_path('esptool.exe')
             flash_cmd = [esptool, "-p", port, "-b", "921600",
-                        "-c", "esp32", "--before", "default_reset", "--after", "hard_reset",
-                        "write_flash", "2686976", "littlefs.bin"]
+                        "-c", "esp32", "--before", "default-reset", "--after", "hard-reset",
+                        "write-flash", "2686976", "littlefs.bin"]
             self.log.emit(f"Выполнение команды: {' '.join(flash_cmd)}")
-            result = subprocess.run(flash_cmd, capture_output=True, text=True)
+            result = subprocess.run(flash_cmd, capture_output=True, text=True, cwd=self.data_dir)
             if result.returncode != 0:
                 return (False, f"Ошибка загрузки FS: {result.stdout}")
             self.log.emit("Файловая система загружена успешно")
@@ -348,7 +373,8 @@ class ESP32Flasher(QMainWindow):
     
     def __init__(self):
         super().__init__()
-        self.base_dir = BASE_DIR
+        self.base_dir = PROG_PATH
+        self.data_dir = DATA_PATH
         self.config = self._load_config()
         self.worker = None
         self.init_ui()
@@ -359,7 +385,7 @@ class ESP32Flasher(QMainWindow):
         if not path:
             return ""
         try:
-            base = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.base_dir
+            base = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.data_dir
             return os.path.relpath(path, base)
         except ValueError:
             return path
@@ -371,20 +397,20 @@ class ESP32Flasher(QMainWindow):
         if os.path.isabs(path):
             return path
         # Сначала проверяем в базовой директории (MEIPASS для exe)
-        base_path = os.path.join(self.base_dir, path)
+        base_path = os.path.join(self.data_dir, path)
         if os.path.exists(base_path):
             return base_path
         # Если не найден, проверяем в текущей директории
         current_path = os.path.join(os.path.dirname(sys.executable), path)
         if os.path.exists(current_path):
             return current_path
-        # Возвращаем путь относительно base_dir
-        return os.path.join(self.base_dir, path)
+        # Возвращаем путь относительно data_dir
+        return os.path.join(self.data_dir, path)
     
     def _load_config(self):
         """Загружает конфигурацию из JSON файла"""
         # Проверяем в базовой директории
-        config_path = os.path.join(self.base_dir, "config", "esp32.json")
+        config_path = os.path.join(self.data_dir, "config", "esp32.json")
         try:
             with open(config_path, 'r') as f:
                 config = json.load(f)
@@ -416,7 +442,7 @@ class ESP32Flasher(QMainWindow):
     def _save_config(self):
         """Сохраняет конфигурацию в JSON файл"""
         # Сохраняем в директорию, где запущен exe
-        save_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.base_dir
+        save_dir = self.data_dir
         config_path = os.path.join(save_dir, "config", "esp32.json")
         try:
             os.makedirs(os.path.dirname(config_path), exist_ok=True)
@@ -611,6 +637,10 @@ class ESP32Flasher(QMainWindow):
         
         # Кнопки действий
         buttons_layout = QHBoxLayout()
+        
+        self.flash_all_checkbox = QCheckBox("Прошивка всех разделов")
+        buttons_layout.addWidget(self.flash_all_checkbox)
+        
         self.flash_btn = QPushButton("Загрузить прошивку (USB)")
         self.flash_btn.clicked.connect(self.start_flash_firmware)
         buttons_layout.addWidget(self.flash_btn)
@@ -765,7 +795,7 @@ class ESP32Flasher(QMainWindow):
         main_layout.addWidget(log_group)
         
         self.update_buttons_state()
-    
+
     def update_tb_status(self):
         """Обновляет отображение статуса ThingsBoard"""
         server = self.config.get('tb_server', '')
@@ -791,7 +821,7 @@ class ESP32Flasher(QMainWindow):
     
     def browse_firmware(self):
         """Открывает диалог выбора файла прошивки"""
-        start_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.base_dir
+        start_dir = self.data_dir
         file_path, _ = QFileDialog.getOpenFileName(
             self, "Выберите файл прошивки", start_dir,
             "Binary files (*.bin);;All files (*.*)"
@@ -816,7 +846,7 @@ class ESP32Flasher(QMainWindow):
     
     def browse_content(self):
         """Открывает диалог выбора каталога с контентом"""
-        start_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.base_dir
+        start_dir = self.data_dir
         dir_path = QFileDialog.getExistingDirectory(
             self, "Выберите каталог с контентом", start_dir
         )
@@ -833,7 +863,7 @@ class ESP32Flasher(QMainWindow):
     
     def browse_filesystem(self):
         """Открывает диалог выбора каталога файловой системы"""
-        start_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else self.base_dir
+        start_dir = self.dragLeaveEvent_dir
         dir_path = QFileDialog.getExistingDirectory(
             self, "Выберите каталог файловой системы", start_dir
         )
@@ -989,14 +1019,25 @@ class ESP32Flasher(QMainWindow):
         if not firmware_path or not os.path.exists(firmware_path):
             QMessageBox.critical(self, "Ошибка", "Путь к прошивке не выбран или файл не существует")
             return
+        
+        flash_all = self.flash_all_checkbox.isChecked()
+        if flash_all:
+            # Проверяем наличие всех файлов
+            for key in ['bootloader_path', 'partitions_path', 'boot_app0_path']:
+                path = self._get_absolute_path(self.config.get(key, ''))
+                if not os.path.exists(path):
+                    QMessageBox.critical(self, "Ошибка", f"Файл {key} не найден: {path}")
+                    return
+        
         try:
             fw_info = self._read_firmware_info(firmware_path)
             self.log_text.append(f"Прошивка: {fw_info['name']} v{fw_info['version']} ({fw_info['size']})")
-            self.log_text.append(f"Проект: {fw_info['project_name']}, Собрана: {fw_info['build_date']} {fw_info['build_time']}")
+            if flash_all:
+                self.log_text.append("Режим: полная прошивка всех разделов")
         except:
             pass
-        self.start_operation("flash_firmware", firmware_path=firmware_path)
-    
+        self.start_operation("flash_firmware", firmware_path=firmware_path, flash_all=flash_all, config=self.config)
+
     def start_ota_upload(self):
         """Запускает загрузку прошивки через ThingsBoard OTA"""
         firmware_path = self.config.get('firmware_path_abs')

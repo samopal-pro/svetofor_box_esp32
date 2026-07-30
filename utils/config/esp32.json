@@ -1,5 +1,9 @@
 {
+    "bootloader_path": "..\\build\\esp32.esp32.esp32\\svetofor_box_esp32.ino.bootloader.bin",
+    "partitions_path": "..\\build\\esp32.esp32.esp32\\svetofor_box_esp32.ino.partitions.bin",
+    "boot_app0_path": "..\\build\\esp32.esp32.esp32\\boot_app0.bin",
     "firmware_path": "..\\build\\esp32.esp32.esp32\\svetofor_box_esp32.ino.bin",
+    "littlefs_path": "littlefs.bin",
     "filesystem_path": "..\\data",
     "httpd_path": "..\\data\\httpd",
     "tb_server": "http://109.172.115.70:8088",
