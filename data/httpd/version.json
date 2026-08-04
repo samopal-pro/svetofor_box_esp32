@@ -1,5 +1,5 @@
 {
   "name": "SVETOFORBOX_ESP32_V10_HTTPD",
-  "version": "10.1.0",
+  "version": "10.1.2",
   "exclude": "config.json,config1.json,config2.json,config3.json"
 }

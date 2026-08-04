@@ -22,7 +22,7 @@
 #define IS_DNS
 
  
-#define SOFTWARE_V           "10.1.1"
+#define SOFTWARE_V           "10.1.2"
 #define HARDWARE_V           "10.0.0"
 #define HTTPD_V              "10.1.0"
 #define CONFIG_V             "10.1.0"

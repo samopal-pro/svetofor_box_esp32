@@ -105,6 +105,8 @@
     "MP3_NAN_LOOP": false,
     "BUSY_NAN_COLOR": "#FFFF00",
     "BUSY_NAN_COLOR_TM": 4,
+    "MP3_NAN_ENABLE1": true,
+    "MP3_NAN_DELAY1": 10,
 
     "MP3_BUSY1_ENABLE": false,
     "MP3_BUSY1_NUM": 3,

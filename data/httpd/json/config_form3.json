@@ -83,6 +83,15 @@
           { "type": "number", "name": "MP3_NAN_COLOR_TM", "min": 0, "max": 3600, "width": 50 }
         ],
         [
+          { "type": "label", "value": "Таймер отсрочки срабатывания датчика (сбрасывается только когда бокс свободен)" },
+          { "type": "checkbox", "name": "MP3_NAN_ENABLE1" },
+          { "type": "number", "name": "MP3_NAN_DELAY1", "min": 0, "max": 3600, "width": 60 },
+          { "type": "label", "value": "" },
+          { "type": "label", "value": "" },
+          { "type": "label", "value": "" },
+          { "type": "label", "value": "" }
+        ],
+        [
           { "type": "label", "value": "В боксе долго находится автмомбиль. Файл 003.mp3" },
           { "type": "checkbox", "name": "MP3_BUSY1_ENABLE" },
           { "type": "number", "name": "MP3_BUSY1_DELAY", "min": 0, "max": 3600, "width": 60 },

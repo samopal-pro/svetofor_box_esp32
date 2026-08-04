@@ -3,7 +3,7 @@
 int MP3_ADD_DIR = MP3_SYSTEM_FULL_DIR;
 
 MySensor *sensor;
-TEvent *EventSensor, *EventRelay1, *EventRelay2;
+TEvent *EventSensor,*EventNan, *EventRelay1, *EventRelay2;
 TEvent *EventBusy1, *EventBusy2;
 TEvent *EventBtnAdd1, *EventBtnAdd2;
 TEventRGB *EventRGB1, *EventRGB2, *SaveRGB1, *SaveRGB2;
@@ -30,7 +30,7 @@ uint32_t msStat1  = 0, msStat2 = 0;
 bool statRelay1 = false, statRelay2 = false;
 bool inverseRelay1 = false, inverseRelay2 = false;
 uint16_t eventRelay1 = 0, eventRelay2 = 0;
-uint32_t msRelay1 = 0, msRelay2 = 0;
+uint32_t msRelay1 = 0, msRelay2 = 0, msBusy = 0;
 
 char calibrCheck[5], calibrNum = -1;
 
@@ -70,6 +70,7 @@ void tasksStart() {
 //  bootSemaphore   = xSemaphoreCreateMutex();
 
    EventSensor         = new TEvent(0,0,handleSensor);
+   EventNan            = new TEvent(0,0,handleNan);
    EventRelay1         = new TEvent((uint32_t)(config["config1"]["TM_ON_RELAY1"].as<float>()*1000),(uint32_t)(config["config1"]["TM_OFF_RELAY1"].as<float>()*1000),handleRelay1);
    EventRelay2         = new TEvent((uint32_t)(config["config1"]["TM_ON_RELAY2"].as<float>()*1000),(uint32_t)(config["config1"]["TM_OFF_RELAY2"].as<float>()*1000),handleRelay2);
    EventBusy1          = new TEvent(config["config3"]["MP3_BUSY1_DELAY"].as<uint32_t>(),0,handleBusy1);
@@ -143,6 +144,7 @@ void taskEvents(void *pvParameters) {
       EventBusy2->loop();
       EventBtnAdd1->loop();
       EventBtnAdd2->loop();
+      EventNan->loop();
       vTaskDelay(250);
    }
 }
@@ -589,13 +591,15 @@ void setNanMode(){
 void checkChangeOn(){
    uint32_t _color1, _color2;
    if( SensorOn == lastSensorOn )return;
+   uint32_t _ms = millis();
    Serial.printf("!!! Stat is change %d %d\n", (int)SensorOn,(int)lastSensorOn);
    isSendNet  = true;
    isSendLora = true;
    switch(SensorOn){
       case SS_BUSY:
 //      case SS_NAN_BUSY:   
-         if(lastSensorOn!=SS_RESTORE){   
+         if(lastSensorOn!=SS_RESTORE){  
+            msBusy = _ms + config["config3"]["MP3_NAN_DELAY1"].as<uint32_t>()*1000;
             EventSensor->on();
             if(EventBusy1->State != ES_WAIT_ON && EventBusy1->State != ES_ON)EventBusy1->on(config["config3"]["MP3_BUSY1_DELAY"].as<uint32_t>()*1000);
             if(EventBusy2->State != ES_WAIT_ON && EventBusy2->State != ES_ON)EventBusy2->on(config["config3"]["MP3_BUSY2_DELAY"].as<uint32_t>()*1000);
@@ -616,6 +620,8 @@ void checkChangeOn(){
             EventSensor->off();
             EventBusy1->reset();
             EventBusy2->reset();
+            EventNan->reset();
+            msBusy = 0;
             baseMP3("FREE");
          }
          if( config["config"]["CHECK_FREE_BLINK_COLOR"].as<bool>() )
@@ -676,13 +682,29 @@ void checkChangeOn(){
          }
          else if(lastSensorOn!=SS_RESTORE){   
             if( lastSensorOn == SS_FREE )baseMP3("FREE_NAN");
-            else baseMP3("NAN");
+            else {
+              Serial.printf("!!! Check Timer Nan %d %d %u %u\n",(int)config["config3"]["MP3_NAN_ENABLE1"].as<bool>(),(int)EventNan->State,_ms,msBusy); 
+              if(config["config3"]["MP3_NAN_ENABLE"].as<bool>() ){
+                 if( msBusy != 0 
+                    && msBusy <= _ms
+                    && EventNan->State != ES_WAIT_ON 
+                    && EventNan->State != ES_ON){
+                       Serial.println("!!! Start Timer NAN");
+                       EventNan->on(config["config3"]["MP3_NAN_DELAY"].as<uint32_t>()*1000);
+                 }
+              }
+            }
+//            else baseMP3("NAN");
          }
          break;
    }
    lastSensorOn = SensorOn;
    isPlayMP3 = false;
    saveSet(Distance,SensorOn);
+}
+
+void handleNan(bool flag){
+   if( flag )baseMP3("NAN");
 }
 
 
